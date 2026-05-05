@@ -1,0 +1,23 @@
+name: Build and Test Dev Environment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker compose -f docker-compose.yml up -d --build
+
+      - name: create database
+        run: docker compose -f docker-compose.yml exec web python manage.py create_db
+
+      - name: check docker is up
+        run: docker compose ps
+
