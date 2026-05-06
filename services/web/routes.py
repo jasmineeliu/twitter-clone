@@ -49,13 +49,13 @@ def logged_in_user(request: Request) -> str:
 async def read_root(request: Request):
     """Returns the HTML content for the home page"""
     username = logged_in_user(request)
-    return templates.TemplateResponse("index.html", {"request": request, "username": username})
+    return templates.TemplateResponse(request, "index.html", {"request": request, "username": username})
 
 @router.get("/login")
 def read_login(request: Request):
     """Returns the HTML content for the login page"""
     username = logged_in_user(request)
-    return templates.TemplateResponse("login.html", {"request": request, "username": username})
+    return templates.TemplateResponse(request, "login.html", {"request": request, "username": username})
 
 @router.post("/login")
 def post_login(request: Request, username: str = Form(...), password: str = Form(...)):
@@ -66,19 +66,19 @@ def post_login(request: Request, username: str = Form(...), password: str = Form
     valid_username = check_credentials(username, password)
     if valid_username is not None:
         # Credentials are valid, set cookies and return the success page
-        response = templates.TemplateResponse("login_successful.html", {"request": request, "username": valid_username})
+        response = templates.TemplateResponse(request, "login_successful.html", {"request": request, "username": valid_username})
         response.set_cookie("username", username)
         response.set_cookie("password", password)
         return response
     else:
         # Credentials are invalid, return an error page
-        return templates.TemplateResponse("login.html", {"request": request, "username": None, "error": "Invalid username or password"})
+        return templates.TemplateResponse(request, "login.html", {"request": request, "username": None, "error": "Invalid username or password"})
 
 @router.get("/logout")
 def read_logout(request: Request):
     """Returns the HTML content for the logout page and deletes cookies"""
     username = logged_in_user(request)
-    response = templates.TemplateResponse("logout.html", {"request": request, "username": None})
+    response = templates.TemplateResponse(request, "logout.html", {"request": request, "username": None})
     response.set_cookie("username", "")
     response.set_cookie("password", "")
     response.set_cookie("username", "", expires=0)
@@ -89,34 +89,34 @@ def read_logout(request: Request):
 def read_create_account(request: Request):
     """Returns the HTML content for the create account page"""
     username = logged_in_user(request)
-    return templates.TemplateResponse("create_account.html", {"request": request, "username": username})
+    return templates.TemplateResponse(request, "create_account.html", {"request": request, "username": username})
 
 @router.post("/create_account")
 def post_create_account(request: Request, username: str = Form(...), password: str = Form(...), confirm_password: str = Form(...)):
     """Returns the HTML content after a successful account creation"""
     username = logged_in_user(request)
-    return templates.TemplateResponse("account_created.html", {"request": request, "username": username})
+    return templates.TemplateResponse(request, "account_created.html", {"request": request, "username": username})
 
 @router.get("/create_message")
 def read_create_message(request: Request):
     """Returns the HTML content for the create message page"""
     username = logged_in_user(request)
-    return templates.TemplateResponse("create_message.html", {"request": request, "username": username})
+    return templates.TemplateResponse(request, "create_message.html", {"request": request, "username": username})
 
 @router.post("/create_message")
 def post_create_message(request: Request, message: str = Form(...)):
     """Returns the HTML content after a successful message creation"""
     username = logged_in_user(request)
-    return templates.TemplateResponse("message_posted.html", {"request": request, "username": username})
+    return templates.TemplateResponse(request, "message_posted.html", {"request": request, "username": username})
 
 @router.get("/search")
 def read_search(request: Request):
     """Returns the HTML content for the search page"""
     username = logged_in_user(request)
-    return templates.TemplateResponse("search.html", {"request": request, "username": username})
+    return templates.TemplateResponse(request, "search.html", {"request": request, "username": username})
 
 @router.post("/search")
 def post_search(request: Request, query: str = Form(...)):
     """Returns the HTML content for the search results page"""
     username = logged_in_user(request)
-    return templates.TemplateResponse("search_results.html", {"request": request, "username": username})
+    return templates.TemplateResponse(request, "search_results.html", {"request": request, "username": username})
