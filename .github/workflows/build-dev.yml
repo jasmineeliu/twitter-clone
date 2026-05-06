@@ -18,7 +18,7 @@ jobs:
         run: |
           echo "Waiting for PostgreSQL to be ready..."
           for i in {1..30}; do
-            if docker compose exec -T pg_normalized pg_isready -U postgres; then
+            if docker compose exec -T db pg_isready -U postgres; then
               echo "PostgreSQL is ready"
               break
             fi
@@ -35,14 +35,14 @@ jobs:
             docker compose logs
           fi
           # Verify specific services are up
-          docker compose ps pg_normalized | grep -q "running\|Up"
+          docker compose ps db | grep -q "running\|Up"
           docker compose ps web | grep -q "running\|Up"
           echo "All services started successfully"
 
       - name: Test web service is responding
         run: |
           sleep 5
-          curl --retry 5 --retry-delay 2 --retry-connrefused --fail http://localhost:8000
+          curl --retry 5 --retry-delay 2 --retry-connrefused --fail http://localhost:5000
 
       - name: Show logs on failure
         if: failure()
