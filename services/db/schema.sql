@@ -17,7 +17,7 @@ CREATE TABLE users (
     name TEXT,
     location TEXT,
     description TEXT,
-    withheld_in_countries VARCHAR(2)[],
+    withheld_in_countries VARCHAR(2)[]
 );
 
 -- CREATE INDEX idx_users_screen_name ON users(screen_name);
@@ -26,12 +26,13 @@ CREATE TABLE users (
 -- -- =========================
 -- -- CREDENTIALS (REQUIRED ADDITION)
 -- -- =========================
--- CREATE TABLE credentials (
---     id_users BIGINT PRIMARY KEY REFERENCES users(id_users),
---     password_hash TEXT NOT NULL,
--- );
+ CREATE TABLE credentials (
+     id_users BIGINT PRIMARY KEY,
+     password_hash TEXT NOT NULL,
+     FOREIGN KEY (id_users) REFERENCES users(id_users)
+ );
 
--- CREATE INDEX idx_credentials_user ON credentials(id_users);
+ CREATE INDEX idx_credentials_user ON credentials(id_users);
 
 
 -- =========================
@@ -54,7 +55,7 @@ CREATE TABLE tweets (
     state_code VARCHAR(2),
     lang TEXT,
     place_name TEXT,
-    FOREIGN KEY (id_users) REFERENCES users(id_users),
+    FOREIGN KEY (id_users) REFERENCES users(id_users)
 );
 
 CREATE INDEX ON tweets (id_tweets, lang);
