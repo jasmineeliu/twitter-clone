@@ -12,16 +12,16 @@ services:
     ports:
       - 2089:5432
 
-    web:
-      build: ./services/web
-      volumes:
-        - ./services/web/:/usr/src/app/
-      ports:
-        - 1089:5000
-      env_file:
-        - ./.env.dev
-      depends_on:
-        - db
+  web:
+    build: ./services/web
+    volumes:
+      - ./services/web/:/usr/src/app/
+    ports:
+      - 1089:5000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
 
 volumes:
   postgres_data:
