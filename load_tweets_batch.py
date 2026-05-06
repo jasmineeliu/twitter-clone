@@ -206,28 +206,6 @@ def _insert_tweets(connection,input_tweets):
         ########################################
 
         try:
-            geo_coords = tweet['geo']['coordinates']
-            geo_coords = str(tweet['geo']['coordinates'][0]) + ' ' + str(tweet['geo']['coordinates'][1])
-            geo_str = 'POINT'
-        except TypeError:
-            try:
-                geo_coords = '('
-                for i,poly in enumerate(tweet['place']['bounding_box']['coordinates']):
-                    if i>0:
-                        geo_coords+=','
-                    geo_coords+='('
-                    for j,point in enumerate(poly):
-                        geo_coords+= str(point[0]) + ' ' + str(point[1]) + ','
-                    geo_coords+= str(poly[0][0]) + ' ' + str(poly[0][1])
-                    geo_coords+=')'
-                geo_coords+=')'
-                geo_str = 'MULTIPOLYGON'
-            except KeyError:
-                if tweet['user']['geo_enabled']:
-                    geo_str = None
-                    geo_coords = None
-
-        try:
             text = tweet['extended_tweet']['full_text']
         except:
             text = tweet['text']
@@ -269,8 +247,6 @@ def _insert_tweets(connection,input_tweets):
             'in_reply_to_status_id':tweet.get('in_reply_to_status_id',None),
             'in_reply_to_user_id':tweet.get('in_reply_to_user_id',None),
             'quoted_status_id':tweet.get('quoted_status_id',None),
-            'geo_coords':geo_coords,
-            'geo_str':geo_str,
             'retweet_count':tweet.get('retweet_count',None),
             'quote_count':tweet.get('quote_count',None),
             'favorite_count':tweet.get('favorite_count',None),
@@ -294,11 +270,11 @@ def _insert_tweets(connection,input_tweets):
 
     sql = sqlalchemy.sql.text('''
         INSERT INTO tweets
-            (id_tweets,id_users,created_at,in_reply_to_status_id,in_reply_to_user_id,quoted_status_id,geo,retweet_count,quote_count,favorite_count,withheld_copyright,withheld_in_countries,place_name,country_code,state_code,lang,text,source)
+            (id_tweets,id_users,created_at,in_reply_to_status_id,in_reply_to_user_id,quoted_status_id,retweet_count,quote_count,favorite_count,withheld_copyright,withheld_in_countries,place_name,country_code,state_code,lang,text,source)
             VALUES
             '''
             +
-            ','.join([f"(:id_tweets{i},:id_users{i},:created_at{i},:in_reply_to_status_id{i},:in_reply_to_user_id{i},:quoted_status_id{i},ST_GeomFromText(:geo_str{i} || '(' || :geo_coords{i} || ')'), :retweet_count{i},:quote_count{i},:favorite_count{i},:withheld_copyright{i},:withheld_in_countries{i},:place_name{i},:country_code{i},:state_code{i},:lang{i},:text{i},:source{i})" for i in range(len(tweets))])
+            ','.join([f"(:id_tweets{i},:id_users{i},:created_at{i},:in_reply_to_status_id{i},:in_reply_to_user_id{i},:quoted_status_id{i}, :retweet_count{i},:quote_count{i},:favorite_count{i},:withheld_copyright{i},:withheld_in_countries{i},:place_name{i},:country_code{i},:state_code{i},:lang{i},:text{i},:source{i})" for i in range(len(tweets))])
             +
             '''
             ON CONFLICT DO NOTHING

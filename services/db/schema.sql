@@ -66,7 +66,7 @@ CREATE TABLE tweets (
 
     place_name TEXT,
 
-    geo geometry
+    -- geo geometry
 );
 
 -- Core query indexes
