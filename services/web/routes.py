@@ -12,4 +12,4 @@ templates = Jinja2Templates(directory="templates")
 @router.get("/")
 async def read_root(request: Request):
     """Returns the HTML content for the home page"""
-    return {"request": request, "username": "hi"}
+    return {"hello": "world"}
