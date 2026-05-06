@@ -27,9 +27,8 @@ CREATE TABLE users (
 -- -- CREDENTIALS (REQUIRED ADDITION)
 -- -- =========================
 -- CREATE TABLE credentials (
---     id_users BIGINT PRIMARY KEY REFERENCES users(id_users) ON DELETE CASCADE,
+--     id_users BIGINT PRIMARY KEY REFERENCES users(id_users),
 --     password_hash TEXT NOT NULL,
---     created_at TIMESTAMPTZ DEFAULT NOW()
 -- );
 
 -- CREATE INDEX idx_credentials_user ON credentials(id_users);
@@ -43,7 +42,6 @@ CREATE TABLE tweets (
     id_users BIGINT,
     created_at TIMESTAMPTZ,
     in_reply_to_status_id BIGINT,
-    in_reply_to_user_id BIGINT,
     quoted_status_id BIGINT,
     retweet_count SMALLINT,
     favorite_count SMALLINT,
@@ -57,7 +55,6 @@ CREATE TABLE tweets (
     lang TEXT,
     place_name TEXT,
     FOREIGN KEY (id_users) REFERENCES users(id_users),
-    FOREIGN KEY (in_reply_to_user_id) REFERENCES users(id_users)
 );
 
 CREATE INDEX ON tweets (id_tweets, lang);

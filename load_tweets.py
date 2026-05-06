@@ -154,28 +154,6 @@ def insert_tweet(connection,tweet):
             place_name = None
 
         # NOTE:
-        # The tweets table has the following foreign key:
-        # > FOREIGN KEY (in_reply_to_user_id) REFERENCES users(id_users)
-        #
-        # This means that every "in_reply_to_user_id" field must reference a valid entry in the users table.
-        # If the id is not in the users table, then you'll need to add it in an "unhydrated" form.
-        if tweet.get('in_reply_to_user_id',None) is not None:
-             sql=sqlalchemy.sql.text('''
-                SELECT id_users
-                FROM users
-                WHERE id_users = :id_users
-             ''')
-             res = connection.execute(sql,{
-                'id_users':tweet.get('in_reply_to_user_id'),
-             })
-             if res.first() is None:
-                sql=sqlalchemy.sql.text('''
-                    INSERT INTO users (id_users)
-                    VALUES (:id_users) ON CONFLICT DO NOTHING;
-                ''')
-                res = connection.execute(sql, {
-                    'id_users':tweet.get('in_reply_to_user_id')
-                })
 
         # insert the tweet
         sql = sqlalchemy.sql.text('''
@@ -184,7 +162,6 @@ def insert_tweet(connection,tweet):
                 id_users,
                 created_at,
                 in_reply_to_status_id,
-                in_reply_to_user_id,
                 quoted_status_id,
                 retweet_count,
                 favorite_count,
@@ -196,14 +173,13 @@ def insert_tweet(connection,tweet):
                 country_code,
                 state_code,
                 lang,
-                place_name,
+                place_name
             )
             VALUES (
                 :id_tweets,
                 :id_users,
                 :created_at,
                 :in_reply_to_status_id,
-                :in_reply_to_user_id,
                 :quoted_status_id,
                 :retweet_count,
                 :favorite_count,
@@ -215,7 +191,7 @@ def insert_tweet(connection,tweet):
                 :country_code,
                 :state_code,
                 :lang,
-                :place_name,
+                :place_name
             ) ON CONFLICT DO NOTHING
         ''')
 
@@ -226,7 +202,6 @@ def insert_tweet(connection,tweet):
             'created_at': tweet.get('created_at'),
 
             'in_reply_to_status_id': tweet.get('in_reply_to_status_id'),
-            'in_reply_to_user_id': tweet.get('in_reply_to_user_id'),
             'quoted_status_id': tweet.get('quoted_status_id'),
 
             'retweet_count': tweet.get('retweet_count'),
@@ -242,7 +217,7 @@ def insert_tweet(connection,tweet):
             'country_code': country_code, 
             'state_code': remove_nulls(state_code),  # depends on your parsing logic
             'lang': tweet.get('lang'),
-            'place_name': remove_nulls(place_name),
+            'place_name': remove_nulls(place_name)
         })
         
 ################################################################################
