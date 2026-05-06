@@ -21,4 +21,3 @@ COPY schema.sql /docker-entrypoint-initdb.d/01.sql
 
 # seed tweets on first db init (runs only when /var/lib/postgresql/data is empty)
 COPY load_tweets_batch.py /tmp/db/load_tweets_batch.py
-COPY seed_tweets_on_init.sh /docker-entrypoint-initdb.d/02_seed_tweets.sh
