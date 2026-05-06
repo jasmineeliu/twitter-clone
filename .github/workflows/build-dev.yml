@@ -1,23 +1,50 @@
-name: Build and Test Dev Environment
+name: start_services
 
 on:
   push:
-    branches:
-      - main
+  pull_request:
 
 jobs:
-  build-and-test:
+  start_services:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker compose -f docker-compose.yml up -d --build
+      - name: Build and start services
+        run: docker compose up -d --build
 
-      - name: create database
-        run: docker compose -f docker-compose.yml exec web python manage.py create_db
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          for i in {1..30}; do
+            if docker compose exec -T pg_normalized pg_isready -U postgres; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
 
-      - name: check docker is up
-        run: docker compose ps
+      - name: Check all services are running
+        run: |
+          docker compose ps
+          # Check that all services are running (not exited)
+          if docker compose ps | grep -E "Exit|exited"; then
+            echo "Some services have exited unexpectedly"
+            docker compose logs
+            exit 1
+          fi
+          # Verify specific services are up
+          docker compose ps pg_normalized | grep -q "running\|Up"
+          docker compose ps web | grep -q "running\|Up"
+          echo "All services started successfully"
 
+      - name: Test web service is responding
+        run: |
+          sleep 5
+          curl --retry 5 --retry-delay 2 --retry-connrefused --fail http://localhost:8000
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
