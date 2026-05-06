@@ -1,6 +1,6 @@
 # Dockerizing Flask with Postgres, Gunicorn, and Nginx
 
-![Build Status](https://github.com/jasmineeliu/flask-on-docker/actions/workflows/build-dev.yml/badge.svg)
+![Build Status](https://github.com/jasmineeliu/twitter-clone/actions/workflows/build-dev.yml/badge.svg)
 
 ## Overview
 
@@ -22,7 +22,7 @@ To start developing, you'll need:
 Once you've installed these tools, clone this repo through:
 
 ```
-git clone https://github.com/jasmineeliu/flask-on-docker.git
+git clone https://github.com/jasmineeliu/twitter-clone.git
 ```
 
 For development mode, use the following commands:
