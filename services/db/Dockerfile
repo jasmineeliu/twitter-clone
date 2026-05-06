@@ -18,6 +18,3 @@ RUN pip3 install --no-cache-dir psycopg2-binary sqlalchemy
 # copy over the pagila database;
 # we rename the files so that they get executed in the correct order
 COPY schema.sql /docker-entrypoint-initdb.d/01.sql
-
-# seed tweets on first db init (runs only when /var/lib/postgresql/data is empty)
-COPY load_tweets_batch.py /tmp/db/load_tweets_batch.py
