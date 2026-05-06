@@ -168,7 +168,6 @@ def _insert_tweets(connection,input_tweets):
     users = []
     tweets = []
     users_unhydrated_from_tweets = []
-    users_unhydrated_from_mentions = []
     tweet_mentions = []
     tweet_tags = []
     tweet_media = []
@@ -285,84 +284,13 @@ def _insert_tweets(connection,input_tweets):
             'source':remove_nulls(tweet.get('source',None)),
             })
 
-        ########################################
-        # insert into the tweet_urls table
-        ########################################
-
-        try:
-            urls = tweet['extended_tweet']['entities']['urls']
-        except KeyError:
-            urls = tweet['entities']['urls']
-
-        for url in urls:
-            tweet_urls.append({'id_tweets':tweet['id'], 'urls':url['expanded_url']})
-
-        ########################################
-        # insert into the tweet_mentions table
-        ########################################
-
-        try:
-            mentions = tweet['extended_tweet']['entities']['user_mentions']
-        except KeyError:
-            mentions = tweet['entities']['user_mentions']
-
-        for mention in mentions:
-            users_unhydrated_from_mentions.append({
-                'id_users':mention['id'],
-                'name':remove_nulls(mention['name']),
-                'screen_name':remove_nulls(mention['screen_name']),
-                })
-
-            tweet_mentions.append({
-                'id_tweets':tweet['id'],
-                'id_users':mention['id']
-                })
-
-        ########################################
-        # insert into the tweet_tags table
-        ########################################
-
-        try:
-            hashtags = tweet['extended_tweet']['entities']['hashtags'] 
-            cashtags = tweet['extended_tweet']['entities']['symbols'] 
-        except KeyError:
-            hashtags = tweet['entities']['hashtags']
-            cashtags = tweet['entities']['symbols']
-
-        tags = [ '#'+hashtag['text'] for hashtag in hashtags ] + [ '$'+cashtag['text'] for cashtag in cashtags ]
-
-        for tag in tags:
-            tweet_tags.append({
-                'id_tweets':tweet['id'],
-                'tag':remove_nulls(tag)
-                })
-
-        ########################################
-        # insert into the tweet_media table
-        ########################################
-
-        try:
-            media = tweet['extended_tweet']['extended_entities']['media']
-        except KeyError:
-            try:
-                media = tweet['extended_entities']['media']
-            except KeyError:
-                media = []
-
-        for medium in media:
-            tweet_media.append({'id_tweets':tweet['id'], 'urls':medium['media_url'], 'type':medium['type']})
-
+ 
     ######################################## 
     # STEP 2: perform the actual SQL inserts
     ######################################## 
     # use the bulk_insert function to insert most of the dat
     bulk_insert(connection, 'users', users)
     bulk_insert(connection, 'users', users_unhydrated_from_tweets)
-    bulk_insert(connection, 'users', users_unhydrated_from_mentions)
-    bulk_insert(connection, 'tweet_mentions', tweet_mentions)
-    bulk_insert(connection, 'tweet_tags', tweet_tags)
-    bulk_insert(connection, 'tweet_media', tweet_media)
-    bulk_insert(connection, 'tweet_urls', tweet_urls)
 
     sql = sqlalchemy.sql.text('''
         INSERT INTO tweets
