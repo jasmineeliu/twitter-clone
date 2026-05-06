@@ -37,42 +37,6 @@ def remove_nulls(s):
     else:
         return s.replace('\x00','')
 
-
-def get_id_urls(url, connection):
-    '''
-    Given a url, return the corresponding id in the urls table.
-    If no row exists for the url, then one is inserted automatically.
-
-    NOTE:
-    This function cannot be tested with standard python testing tools because it interacts with the db.
-    '''
-    sql = sqlalchemy.sql.text('''
-    insert into urls 
-        (url)
-        values
-        (:url)
-    on conflict do nothing
-    returning id_urls
-    ;
-    ''')
-    res = connection.execute(sql,{'url':url}).first()
-
-    # when no conflict occurs, then the query above inserts a new row in the url table and returns id_urls in res[0];
-    # when a conflict occurs, then the query above does not insert or return anything;
-    # we need to run a select statement to put the already existing id_urls into res[0]
-    if res is None:
-        sql = sqlalchemy.sql.text('''
-        select id_urls 
-        from urls
-        where
-            url=:url
-        ''')
-        res = connection.execute(sql,{'url':url}).first()
-
-    id_urls = res[0]
-    return id_urls
-
-
 def insert_tweet(connection,tweet):
     
     '''
@@ -104,17 +68,13 @@ def insert_tweet(connection,tweet):
         ########################################
         # insert into the users table
         ########################################
-        if tweet['user']['url'] is None:
-            user_id_urls = None
-        else:
-            user_id_urls = get_id_urls(tweet['user']['url'], connection)
+
         # create/update the user
         sql = sqlalchemy.sql.text('''
             INSERT INTO users (
                 id_users,
                 created_at,
                 updated_at,
-                id_urls,
                 friends_count,
                 listed_count,
                 favourites_count,
@@ -131,7 +91,6 @@ def insert_tweet(connection,tweet):
                 :id_users,
                 :created_at,
                 :updated_at,
-                :id_urls,
                 :friends_count,
                 :listed_count,
                 :favourites_count,
@@ -152,7 +111,6 @@ def insert_tweet(connection,tweet):
             'id_users': tweet['user']['id'],
             'created_at': tweet['user']['created_at'],   # may need datetime parsing
             'updated_at': None,  # Twitter JSON usually doesn’t have this
-            'id_urls': None,     # depends on how you're handling urls table
 
             'friends_count': tweet['user']['friends_count'],
             'listed_count': tweet['user']['listed_count'],

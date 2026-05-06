@@ -7,7 +7,6 @@ CREATE TABLE users (
     id_users BIGINT PRIMARY KEY,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
-    id_urls BIGINT REFERENCES urls(id_urls),
     friends_count INTEGER,
     listed_count INTEGER,
     favourites_count INTEGER,
@@ -19,7 +18,6 @@ CREATE TABLE users (
     location TEXT,
     description TEXT,
     withheld_in_countries VARCHAR(2)[],
-    FOREIGN KEY (id_urls) REFERENCES urls(id_urls)
 );
 
 -- CREATE INDEX idx_users_screen_name ON users(screen_name);
