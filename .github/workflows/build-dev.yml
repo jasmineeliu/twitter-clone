@@ -48,4 +48,3 @@ jobs:
       - name: Show logs on failure
         if: failure()
         run: docker compose logs
-
