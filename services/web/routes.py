@@ -39,7 +39,8 @@ def logged_in_user(request: Request) -> str:
     """
     username = request.cookies.get("username")
     password = request.cookies.get("password")
-    if username is not None and password is not None:
+    # Treat missing/empty cookies as logged out.
+    if username and password:
         valid_username = check_credentials(username, password)
         if valid_username is not None:
             return valid_username
@@ -49,7 +50,7 @@ def logged_in_user(request: Request) -> str:
 async def read_root(request: Request):
     """Returns the HTML content for the home page"""
     username = logged_in_user(request)
-    return templates.TemplateResponse(request, "index.html", {"request": request, "username": username})
+    return templates.TemplateResponse(request, "base.html", {"request": request, "username": username})
 
 @router.get("/login")
 def read_login(request: Request):
@@ -79,10 +80,8 @@ def read_logout(request: Request):
     """Returns the HTML content for the logout page and deletes cookies"""
     username = logged_in_user(request)
     response = templates.TemplateResponse(request, "logout.html", {"request": request, "username": None})
-    response.set_cookie("username", "")
-    response.set_cookie("password", "")
-    response.set_cookie("username", "", expires=0)
-    response.set_cookie("password", "", expires=0)
+    response.delete_cookie("username")
+    response.delete_cookie("password")
     return response
 
 @router.get("/create_account")

@@ -1,22 +1,111 @@
 <html>
     <head>
-        <title>Base</title>
+        <title>Twitter Clone</title>
+        <style>
+            :root {
+                --nav-h: 56px;
+                --pad: 16px;
+                --border: #e5e7eb;
+                --text: #111827;
+                --bg: #ffffff;
+                --link: #2563eb;
+            }
+
+            body {
+                margin: 0;
+                padding-top: calc(var(--nav-h) + var(--pad));
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                color: var(--text);
+                background: var(--bg);
+            }
+
+            .topnav {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: var(--nav-h);
+                background: var(--bg);
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 var(--pad);
+                z-index: 1000;
+            }
+
+            .brand {
+                font-weight: 700;
+                text-decoration: none;
+                color: var(--text);
+            }
+
+            .navlinks {
+                display: flex;
+                gap: 12px;
+                align-items: center;
+            }
+
+            .navlinks a {
+                color: var(--link);
+                text-decoration: none;
+                font-weight: 600;
+            }
+
+            .container {
+                padding: 0 var(--pad) var(--pad);
+            }
+
+            .welcome {
+                margin: 0 0 12px 0;
+                color: #374151;
+            }
+
+            .floating-create {
+                position: fixed;
+                left: 16px;
+                bottom: 16px;
+                z-index: 1000;
+            }
+
+            .floating-create a {
+                display: inline-block;
+                padding: 10px 12px;
+                border: 1px solid var(--border);
+                background: var(--bg);
+                color: var(--text);
+                text-decoration: none;
+                border-radius: 999px;
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+                font-weight: 700;
+            }
+        </style>
     </head>
     <body>
-        <h1>Twitter Clone</h1>
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/login">Login</a></li>
-                <li><a href="/logout">Logout</a></li>
-                <li><a href="/create_account">Create account</a></li>
-                <li><a href="/create_message">Create message</a></li>
-                <li><a href="/search">Search</a></li>
-            </ul>
+        <nav class="topnav">
+            <a class="brand" href="/">Twitter Clone</a>
+
+            <div class="navlinks">
+                {% if username %}
+                    <a href="/logout">Logout</a>
+                {% else %}
+                    <a href="/login">Login</a>
+                    <a href="/create_account">Create account</a>
+                {% endif %}
+            </div>
         </nav>
+
         {% if username %}
-            <p>Welcome, {{ username }}!</p>
+            <div class="floating-create">
+                <a href="/create_message">Create message</a>
+            </div>
         {% endif %}
-        {% block content %}{% endblock %}
+
+        <main class="container">
+            {% if username %}
+                <p class="welcome">Welcome, {{ username }}!</p>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
     </body>
 </html>
