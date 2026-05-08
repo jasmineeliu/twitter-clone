@@ -6,7 +6,7 @@ services:
     image: postgres:13
     volumes:
       - ./:/tmp/db
-      - $HOME/bigdata/pg_normalized_batch:/var/lib/postgresql/data
+      - $HOME/bigdata/pg_normalized:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=pass
