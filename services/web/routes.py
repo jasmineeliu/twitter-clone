@@ -4,10 +4,40 @@ from fastapi import Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 from fastapi import Cookie
+import sqlalchemy
+import os
 
 # Define the router before using it
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+
+_DATABASE_URL = os.getenv("DATABASE_URL")
+_engine = sqlalchemy.create_engine(_DATABASE_URL) if _DATABASE_URL else None
+
+def fetch_tweets(limit: int = 50):
+    """
+    Returns latest tweets as a list of dict-like rows.
+
+    Uses plain SQL (via SQLAlchemy) so it matches your schema.sql table names.
+    """
+    if _engine is None:
+        return []
+
+    stmt = sqlalchemy.text(
+        """
+        SELECT
+            id_tweets,
+            id_users,
+            created_at,
+            text
+        FROM tweets
+        ORDER BY created_at DESC NULLS LAST, id_tweets DESC
+        LIMIT :limit
+        """
+    )
+
+    with _engine.connect() as conn:
+        return conn.execute(stmt, {"limit": limit}).mappings().all()
 
 def check_credentials(username: str, password: str) -> str:
     """
@@ -50,7 +80,13 @@ def logged_in_user(request: Request) -> str:
 async def read_root(request: Request):
     """Returns the HTML content for the home page"""
     username = logged_in_user(request)
-    return templates.TemplateResponse(request, "base.html", {"request": request, "username": username})
+    tweets = fetch_tweets(limit=50)
+    print(tweets)
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {"request": request, "username": username, "tweets": tweets},
+    )
 
 @router.get("/login")
 def read_login(request: Request):

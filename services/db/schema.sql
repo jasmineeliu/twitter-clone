@@ -59,6 +59,8 @@ CREATE TABLE tweets (
 );
 
 CREATE INDEX ON tweets (id_tweets, lang);
+-- Supports fast "latest tweets" timeline queries (ORDER BY created_at DESC ... LIMIT/OFFSET).
+CREATE INDEX idx_tweets_timeline ON tweets (created_at DESC, id_tweets DESC);
 CREATE INDEX ON tweets
 USING GIN (to_tsvector('english', text))
 WHERE lang = 'en';

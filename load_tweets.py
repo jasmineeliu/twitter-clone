@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 # imports
-import sqlalchemy
 import os
 import datetime
 import zipfile

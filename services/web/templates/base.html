@@ -105,6 +105,24 @@
             {% if username %}
                 <p class="welcome">Welcome, {{ username }}!</p>
             {% endif %}
+
+            {% if tweets %}
+                <section>
+                    <h2>Latest tweets</h2>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        {% for t in tweets %}
+                            <article style="padding: 12px; border: 1px solid var(--border); border-radius: 12px;">
+                                <div style="display: flex; justify-content: space-between; gap: 12px;">
+                                    <strong>@{{ t.id_users }}</strong>
+                                    <small style="color: #6b7280;">{{ t.created_at }}</small>
+                                </div>
+                                <p style="margin: 8px 0 0 0; white-space: pre-wrap;">{{ t.text }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+
             {% block content %}{% endblock %}
         </main>
     </body>
