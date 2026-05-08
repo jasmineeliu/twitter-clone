@@ -11,7 +11,7 @@ import os
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
-_DATABASE_URL = os.getenv("DATABASE_URL")
+_DATABASE_URL = "postgresql://postgres:pass@db:5432/postgres_dev"
 _engine = sqlalchemy.create_engine(_DATABASE_URL) if _DATABASE_URL else None
 
 def fetch_tweets(limit: int = 50):
@@ -28,9 +28,13 @@ def fetch_tweets(limit: int = 50):
         SELECT
             id_tweets,
             id_users,
-            created_at,
-            text
-        FROM tweets
+            tweets.created_at,
+            text,
+            place_name,
+            name,
+            screen_name
+        FROM tweets JOIN users
+        USING (id_users)
         ORDER BY created_at DESC NULLS LAST, id_tweets DESC
         LIMIT :limit
         """

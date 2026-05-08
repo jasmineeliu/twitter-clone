@@ -103,7 +103,7 @@
 
         <main class="container">
             {% if username %}
-                <p class="welcome">Welcome, {{ username }}!</p>
+                <h1 class="welcome">Welcome, {{ username }}!</h1>
             {% endif %}
 
             {% if tweets %}
@@ -113,7 +113,10 @@
                         {% for t in tweets %}
                             <article style="padding: 12px; border: 1px solid var(--border); border-radius: 12px;">
                                 <div style="display: flex; justify-content: space-between; gap: 12px;">
-                                    <strong>@{{ t.id_users }}</strong>
+                                   <div>
+                                        <strong>{{ t.name }}</strong>
+                                        <small>@{{t.screen_name}}</small>
+                                   </div>
                                     <small style="color: #6b7280;">{{ t.created_at }}</small>
                                 </div>
                                 <p style="margin: 8px 0 0 0; white-space: pre-wrap;">{{ t.text }}</p>
