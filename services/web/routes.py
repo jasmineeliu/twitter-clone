@@ -40,15 +40,15 @@ def _peek_has_older_than(cursor_created_at: datetime | None, cursor_id_tweets: i
             SELECT 1
             FROM tweets AS t
             WHERE (t.created_at, t.id_tweets) < (:cursor_created_at, :cursor_id_tweets)
-        ) AS e
+        ) 
         """
     )
     with _engine.connect() as conn:
-        row = conn.execute(
+        value = conn.execute(
             stmt,
             {"cursor_created_at": cursor_created_at, "cursor_id_tweets": cursor_id_tweets},
-        ).one()
-        return bool(row["e"])
+        ).scalar()
+        return bool(value)
 
 
 def fetch_tweets_first_page(*, limit_plus_one: int) -> Sequence[Mapping[str, Any]]:
