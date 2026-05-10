@@ -81,18 +81,39 @@
             }
 
             .timeline-pager {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 16px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                align-items: center;
                 margin-top: 20px;
                 padding-top: 16px;
                 border-top: 1px solid var(--border);
             }
 
+            .pager-back {
+                justify-self: start;
+            }
+
+            .pager-forward {
+                justify-self: end;
+            }
+
             .timeline-pager a {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 2.5rem;
+                min-height: 2.5rem;
+                padding: 0 10px;
                 color: var(--link);
                 text-decoration: none;
                 font-weight: 700;
+                font-size: 1.35rem;
+                line-height: 1;
+                border-radius: 8px;
+            }
+
+            .timeline-pager a:hover {
+                background: #f3f4f6;
             }
         </style>
     </head>
@@ -133,7 +154,7 @@
                                         <small> @{{ t.screen_name }}</small>
                                    </div>
                                     {% if t.created_at %}
-                                        <time style="color: #6b7280; font-size: 0.875rem;" datetime="{{ t.created_at.isoformat() }}">{{ t.created_at }}</time>
+                                        <time style="color: #6b7280; font-size: 0.875rem;" datetime="{{ t.created_at.isoformat() }}">{{ t.created_at | message_time }}</time>
                                     {% else %}
                                         <small style="color: #6b7280;">—</small>
                                     {% endif %}
@@ -144,12 +165,16 @@
                     </div>
                     {% if pager and (pager.has_newer or pager.has_older) %}
                         <nav class="timeline-pager" aria-label="Message pagination">
-                            {% if pager.has_newer %}
-                                <a href="{{ pager.newer_href }}">Newer messages</a>
-                            {% endif %}
-                            {% if pager.has_older %}
-                                <a href="{{ pager.older_href }}">Older messages</a>
-                            {% endif %}
+                            <div class="pager-back">
+                                {% if pager.has_newer %}
+                                    <a href="{{ pager.newer_href }}" title="Back — newer messages" aria-label="Back, newer messages"><span aria-hidden="true">←</span></a>
+                                {% endif %}
+                            </div>
+                            <div class="pager-forward">
+                                {% if pager.has_older %}
+                                    <a href="{{ pager.older_href }}" title="Forward — older messages" aria-label="Forward, older messages"><span aria-hidden="true">→</span></a>
+                                {% endif %}
+                            </div>
                         </nav>
                     {% endif %}
                 </section>

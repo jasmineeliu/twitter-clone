@@ -15,6 +15,22 @@ import os
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
+
+def format_message_time(value: datetime | None) -> str:
+    """e.g. 3:45 PM · 5/10/2026 (12-hour, middle dot, M/D/YYYY)."""
+    if value is None:
+        return "—"
+    hour24 = value.hour
+    minute = value.minute
+    hour12 = hour24 % 12
+    if hour12 == 0:
+        hour12 = 12
+    am_pm = "AM" if hour24 < 12 else "PM"
+    return f"{hour12}:{minute:02d} {am_pm} · {value.month}/{value.day}/{value.year}"
+
+
+templates.env.filters["message_time"] = format_message_time
+
 _PAGE_SIZE = 20
 
 _DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:pass@db:5432/postgres_dev")
