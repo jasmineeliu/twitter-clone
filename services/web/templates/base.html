@@ -79,6 +79,21 @@
                 box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
                 font-weight: 700;
             }
+
+            .timeline-pager {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px;
+                margin-top: 20px;
+                padding-top: 16px;
+                border-top: 1px solid var(--border);
+            }
+
+            .timeline-pager a {
+                color: var(--link);
+                text-decoration: none;
+                font-weight: 700;
+            }
         </style>
     </head>
     <body>
@@ -108,21 +123,35 @@
 
             {% if tweets %}
                 <section>
-                    <h2>Latest tweets</h2>
+                    <h2>Messages</h2>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         {% for t in tweets %}
                             <article style="padding: 12px; border: 1px solid var(--border); border-radius: 12px;">
                                 <div style="display: flex; justify-content: space-between; gap: 12px;">
                                    <div>
                                         <strong>{{ t.name }}</strong>
-                                        <small>@{{t.screen_name}}</small>
+                                        <small> @{{ t.screen_name }}</small>
                                    </div>
-                                    <small style="color: #6b7280;">{{ t.created_at }}</small>
+                                    {% if t.created_at %}
+                                        <time style="color: #6b7280; font-size: 0.875rem;" datetime="{{ t.created_at.isoformat() }}">{{ t.created_at }}</time>
+                                    {% else %}
+                                        <small style="color: #6b7280;">—</small>
+                                    {% endif %}
                                 </div>
                                 <p style="margin: 8px 0 0 0; white-space: pre-wrap;">{{ t.text }}</p>
                             </article>
                         {% endfor %}
                     </div>
+                    {% if pager and (pager.has_newer or pager.has_older) %}
+                        <nav class="timeline-pager" aria-label="Message pagination">
+                            {% if pager.has_newer %}
+                                <a href="{{ pager.newer_href }}">Newer messages</a>
+                            {% endif %}
+                            {% if pager.has_older %}
+                                <a href="{{ pager.older_href }}">Older messages</a>
+                            {% endif %}
+                        </nav>
+                    {% endif %}
                 </section>
             {% endif %}
 
