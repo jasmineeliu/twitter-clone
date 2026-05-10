@@ -20,20 +20,21 @@ CREATE TABLE users (
     withheld_in_countries VARCHAR(2)[]
 );
 
--- CREATE INDEX idx_users_screen_name ON users(screen_name);
-
+CREATE INDEX idx_users_screen_name ON users(screen_name);
+CREATE INDEX ON users(id_users);
+CREATE INDEX ON users(name);
 
 -- -- =========================
 -- -- CREDENTIALS (REQUIRED ADDITION)
 -- -- =========================
  CREATE TABLE credentials (
      id_users BIGINT PRIMARY KEY,
-     password_hash TEXT NOT NULL,
+     password TEXT NOT NULL,
      FOREIGN KEY (id_users) REFERENCES users(id_users)
  );
 
  CREATE INDEX idx_credentials_user ON credentials(id_users);
-
+CREATE INDEX ON credentials(id_users, password);
 
 -- =========================
 -- TWEETS
@@ -58,9 +59,4 @@ CREATE TABLE tweets (
     FOREIGN KEY (id_users) REFERENCES users(id_users)
 );
 
-CREATE INDEX ON tweets (id_tweets, lang);
--- Supports fast "latest tweets" timeline queries (ORDER BY created_at DESC ... LIMIT/OFFSET).
-CREATE INDEX idx_tweets_timeline ON tweets (created_at DESC, id_tweets DESC);
-CREATE INDEX ON tweets
-USING GIN (to_tsvector('english', text))
-WHERE lang = 'en';
+CREATE INDEX ON tweets( id_tweets, id_users, created_at, text);

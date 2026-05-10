@@ -85,7 +85,7 @@ async def read_root(request: Request):
     """Returns the HTML content for the home page"""
     username = logged_in_user(request)
     tweets = fetch_tweets(limit=50)
-    print(tweets)
+    # print(tweets)
     return templates.TemplateResponse(
         request,
         "index.html",
