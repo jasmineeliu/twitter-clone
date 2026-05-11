@@ -161,7 +161,7 @@
             }
 
             /* Input */
-            .nav-search input[type="search"] {
+            .nav-search input {
                 flex: 1;
                 border: none;
                 outline: none;
@@ -175,7 +175,7 @@
             }
 
             /* Placeholder */
-            .nav-search input[type="search"]::placeholder {
+            .nav-search input::placeholder {
                 color: #9ca3af;
             }
 
@@ -240,11 +240,12 @@
                 <section class="tweets-holder">
                 {% block successContent %}{% endblock %}
                     <div class="nav-search-box">
-                    <form class="nav-search" action="/search" method="get" role="search">
+                    <form class="nav-search" action="/search" method="post" >
 
                     <input
-                        type="search"
-                        name="q"
+                        type="text"
+                        id="query"
+                        name="query"
                         placeholder="Search messages…"
                         value="{% if search_query_raw is defined %}{{ search_query_raw }}{% endif %}"
                         aria-label="Search messages"

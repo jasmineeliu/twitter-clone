@@ -513,4 +513,11 @@ def read_search(request: Request):
 def post_search(request: Request, query: str = Form(...)):
     """Returns the HTML content for the search results page"""
     username = logged_in_user(request)
-    return templates.TemplateResponse(request, "search_results.html", {"request": request, "username": username})
+    print(query)
+    return templates.TemplateResponse(request,
+    "base.html",
+    {
+        "username": username,
+        "search_query_raw": query
+    }
+)

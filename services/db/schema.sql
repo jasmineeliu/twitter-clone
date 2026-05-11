@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENTION IF NOT EXISTS rum;
 
 -- =========================
 -- USERS
@@ -60,3 +61,5 @@ CREATE TABLE tweets (
 );
 
 CREATE INDEX ON tweets( id_tweets, id_users, created_at, text);
+CREATE INDEX tweets_idx_fts on tweets USING rum(to_tsvector('english', text));
+
