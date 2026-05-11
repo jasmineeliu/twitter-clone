@@ -333,6 +333,20 @@
                             </div>
                         </nav>
                     {% endif %}
+                    {% if offset %}
+                    <nav class="timeline-pager" aria-label="Message pagination">
+                            <div class="pager-back">
+                                {% if offset > 0 %}
+                                    <a href="/?offset={{ prev_offset }}" title="Back — newer messages" aria-label="Back, newer messages"><span aria-hidden="true">←</span></a>
+                                {% endif %}
+                            </div>
+                            <div class="pager-forward">
+                                {% if tweets|length == 20 %}
+                                    <a  href="/?offset={{ next_offset }}" title="Forward — older messages" aria-label="Forward, older messages"><span aria-hidden="true">→</span></a>
+                                {% endif %}
+                            </div>
+                        </nav>
+                    {% endif %} 
                 </section>
             </div>
             {% endif %}

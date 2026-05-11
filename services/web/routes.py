@@ -423,8 +423,8 @@ def create_tweet(username, tweet_text):
         })
         conn.commit()
         return True
-
-def search_tweets(query):
+    
+def search_tweets(query, offset):
     if _engine is None:
         return []
 
@@ -446,6 +446,8 @@ def search_tweets(query):
             plainto_tsquery('english', :query) as q
             WHERE t.text_tsv @@ q 
             ORDER BY ts_rank(t.text_tsv, q) DESC
+            LIMIT :limit
+            OFFSET :offset
         """
     )
 
@@ -453,7 +455,9 @@ def search_tweets(query):
         return conn.execute(
             stmt,
             {
-                "query": query
+                "query": query,
+                "limit": _PAGE_SIZE, 
+                "offset": offset
             },
         ).mappings().all()
 
@@ -553,22 +557,36 @@ def post_create_message(request: Request, message: str = Form(...)):
     return templates.TemplateResponse(request, "created_tweet.html", {"request": request, "username": username, "tweets": tweets, "pager":pager, "message": "Successfully posted message"})
 
 @router.get("/search")
-def read_search(request: Request):
-    """Returns the HTML content for the search page"""
+def read_search(
+    request: Request,
+    query: str | None = Query(None),
+    offset: int = Query(0),
+):
     username = logged_in_user(request)
-    return templates.TemplateResponse(request, "search.html", {"request": request, "username": username})
 
+    tweets = []
+
+    if query:
+        tweets = search_tweets(query, offset)
+
+    next_offset = offset + _PAGE_SIZE
+    prev_offset = max(offset - _PAGE_SIZE, 0)
+
+    return templates.TemplateResponse(  
+        request,
+        "base.html",
+        {
+            "request": request,
+            "username": username,
+            "tweets": tweets,
+            "offset": offset,
+            "next_offset": next_offset,
+            "prev_offset": prev_offset,
+        },
+    
+    )
+    
 @router.post("/search")
-def post_search(request: Request, query: str = Form(...)):
-    """Returns the HTML content for the search results page"""
-    username = logged_in_user(request)
-    tweets = search_tweets(query)
-    print(query)
-    return templates.TemplateResponse(request,
-    "base.html",
-    {
-        "username": username,
-        "search_query_raw": query,
-        "tweets": tweets
-    }
-)
+def post_search(query: str = Form(...)):
+    url = "/search?" + urlencode({"query": query} + urlencode({"offset": 0}))
+    return RedirectResponse(url=url, status_code=303)
