@@ -352,6 +352,52 @@ def logged_in_user(request: Request) -> str:
             return valid_username
     return None
 
+def create_tweet(username, tweet_text):
+    random_id = random.randint(1, 9223372036854775807)
+    if _engine is None:
+        return None
+    
+    with _engine.connect() as conn:
+        sql = sqlalchemy.sql.text('''
+                SELECT id_users FROM users 
+                WHERE screen_name = :screen_name
+            ''')
+        res = conn.execute(sql, {
+            'screen_name': username,
+        })
+        row = res.fetchone()
+
+        if row is None:
+            return None
+
+        id_user = row.id_users
+                
+        
+        now = datetime.now() 
+        sql = sqlalchemy.sql.text('''
+                INSERT INTO tweets (
+                    id_tweets,
+                    id_users,
+                    created_at,
+                    text
+                )
+                VALUES (
+                    :id_tweets,
+                    :id_users,
+                    :created_at,
+                    :text
+                )
+            ''')
+        
+        res = conn.execute(sql, {
+            'id_tweets': random_id,
+            'id_users': id_user,
+            'created_at': now,
+            'text': tweet_text
+        })
+        conn.commit()
+        return True
+
 @router.get("/")
 async def read_root(
     request: Request,
@@ -443,6 +489,7 @@ def read_create_message(request: Request):
 def post_create_message(request: Request, message: str = Form(...)):
     """Returns the HTML content after a successful message creation"""
     username = logged_in_user(request)
+    create_tweet(username, message)
     return templates.TemplateResponse(request, "message_posted.html", {"request": request, "username": username})
 
 @router.get("/search")
