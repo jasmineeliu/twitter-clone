@@ -1,15 +1,201 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Login page</h1>
-    <form action="/login" method="post">
-        <label for="username">Username:</label><br>
-        <input type="text" id="username" name="username" required><br>
-        <label for="password">Password:</label><br>
-        <input type="password" id="password" name="password" required><br>
-        <input type="submit" value="Submit">
-    </form>
-    {% if error %}
-        <p style="color: red">{{ error }}</p>
-    {% endif %}
+
+<style>
+    body {
+        background: #f4f7fb;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .login-container {
+        min-height: 80vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+    }
+
+    .login-card {
+        background: white;
+        width: 100%;
+        max-width: 420px;
+
+        padding: 2.5rem;
+        border-radius: 24px;
+
+        border: 1px solid #e5e7eb;
+
+        box-shadow:
+            0 10px 25px rgba(0, 0, 0, 0.08),
+            0 4px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    .login-card h1 {
+        text-align: center;
+        margin-bottom: 2rem;
+
+        color: #111827;
+        font-size: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.3rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.45rem;
+
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 0.9rem 1rem;
+
+        border-radius: 14px;
+        border: 1px solid #d1d5db;
+
+        font-size: 1rem;
+        box-sizing: border-box;
+
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #1e90ff;
+
+        box-shadow:
+            0 0 0 4px rgba(30, 144, 255, 0.15);
+    }
+
+    .login-btn {
+        width: 100%;
+        margin-top: 0.5rem;
+
+        padding: 0.95rem;
+
+        border: none;
+        border-radius: 14px;
+
+        background: #1e90ff;
+        color: white;
+
+        font-size: 1rem;
+        font-weight: 700;
+
+        cursor: pointer;
+
+        transition:
+            background 0.2s ease,
+            transform 0.15s ease;
+    }
+
+    .login-btn:hover {
+        background: #1877db;
+        transform: translateY(-1px);
+    }
+
+    .login-btn:active {
+        transform: translateY(0);
+    }
+
+    .error-message {
+        margin-top: 1rem;
+        padding: 0.9rem 1rem;
+
+        border-radius: 12px;
+
+        background: #fee2e2;
+        color: #b91c1c;
+
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .home-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        margin-top: 1.5rem;
+        width: 100%;
+
+        text-decoration: none;
+
+        padding: 0.85rem;
+
+        border-radius: 999px;
+
+        background: #1e90ff;
+        color: white;
+
+        font-weight: 700;
+
+        transition:
+            background 0.2s ease,
+            transform 0.15s ease;
+    }
+
+    .home-link:hover {
+        background: #1877db;
+        transform: translateY(-1px);
+    }
+</style>
+
+<div class="login-container">
+
+    <div class="login-card">
+
+        <h1>Login</h1>
+
+        <form action="/login" method="post">
+
+            <div class="form-group">
+                <label for="username">Username</label>
+
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    placeholder="Enter your username"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    required
+                >
+            </div>
+
+            <input
+                type="submit"
+                value="Login"
+                class="login-btn"
+            >
+
+        </form>
+
+        {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+        {% endif %}
+
+    </div>
+
+</div>
+
 {% endblock %}

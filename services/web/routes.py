@@ -344,8 +344,9 @@ def read_create_account(request: Request):
     return templates.TemplateResponse(request, "create_account.html", {"request": request, "username": username})
 
 @router.post("/create_account")
-def post_create_account(request: Request, username: str = Form(...), password: str = Form(...), confirm_password: str = Form(...)):
+def post_create_account(request: Request, name: str = Form(...), screen_name: str = Form(...), password: str = Form(...), confirm_password: str = Form(...)):
     """Returns the HTML content after a successful account creation"""
+    print(name, screen_name, password, confirm_password)
     username = logged_in_user(request)
     return templates.TemplateResponse(request, "account_created.html", {"request": request, "username": username})
 

@@ -1,14 +1,171 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Create account page</h1>
-    <form action="/create_account" method="post">
-        <label for="username">Username:</label><br>
-        <input type="text" id="username" name="username" required><br>
-        <label for="password">Password:</label><br>
-        <input type="password" id="password" name="password" required><br>
-        <label for="confirm_password">Confirm password:</label><br>
-        <input type="password" id="confirm_password" name="confirm_password" required><br>
-        <input type="submit" value="Submit">
-    </form>
+
+<style>
+    body {
+        background: #f4f7fb;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .create-account-container {
+        min-height: 80vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+    }
+
+    .create-account-card {
+        background: white;
+        width: 100%;
+        max-width: 450px;
+
+        padding: 2.5rem;
+        border-radius: 24px;
+
+        box-shadow:
+            0 10px 25px rgba(0, 0, 0, 0.08),
+            0 4px 10px rgba(0, 0, 0, 0.04);
+
+        border: 1px solid #e5e7eb;
+    }
+
+    .create-account-card h1 {
+        margin-bottom: 1.8rem;
+        text-align: center;
+
+        color: #111827;
+        font-size: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.2rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.45rem;
+
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 0.9rem 1rem;
+
+        border-radius: 14px;
+        border: 1px solid #d1d5db;
+
+        font-size: 1rem;
+        box-sizing: border-box;
+
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #1e90ff;
+
+        box-shadow:
+            0 0 0 4px rgba(30, 144, 255, 0.15);
+    }
+
+    .submit-btn {
+        width: 100%;
+        margin-top: 0.5rem;
+
+        padding: 0.95rem;
+
+        border: none;
+        border-radius: 14px;
+
+        background: #1e90ff;
+        color: white;
+
+        font-size: 1rem;
+        font-weight: 700;
+
+        cursor: pointer;
+
+        transition:
+            background 0.2s ease,
+            transform 0.15s ease;
+    }
+
+    .submit-btn:hover {
+        background: #1877db;
+        transform: translateY(-1px);
+    }
+
+    .submit-btn:active {
+        transform: translateY(0);
+    }
+</style>
+
+<div class="create-account-container">
+    <div class="create-account-card">
+
+        <h1>Create Account</h1>
+
+        <form action="/create_account" method="post">
+
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder="Enter your full name"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="screen_name">Username</label>
+                <input
+                    type="text"
+                    id="screen_name"
+                    name="screen_name"
+                    placeholder="@yourname"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Create a password"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirm_password"
+                    name="confirm_password"
+                    placeholder="Re-enter password"
+                    required
+                >
+            </div>
+
+            <input
+                type="submit"
+                value="Create Account"
+                class="submit-btn"
+            >
+
+        </form>
+
+    </div>
+</div>
+
 {% endblock %}
