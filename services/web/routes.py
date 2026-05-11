@@ -412,6 +412,31 @@ def create_tweet(username, tweet_text):
         conn.commit()
         return True
 
+def search_tweets(query):
+    if _engine is None:
+        return []
+
+    stmt = sqlalchemy.text(
+        """
+            SELECT ts_headline(document, q, 
+                'StartSel="<font color=red><b>", 
+                StopSel="</font></b>", 
+                MaxFragments=10, 
+                MinWords=5, MaxWords=10')
+            FROM tweets,
+            WHERE to_tsvector('english', text) @@ to_tsquery('english', :query)
+            LIMIT 20
+        """
+    )
+
+    with _engine.connect() as conn:
+        return conn.execute(
+            stmt,
+            {
+                "query": query
+            },
+        ).mappings().all()
+
 @router.get("/")
 async def read_root(
     request: Request,
@@ -513,7 +538,8 @@ def read_search(request: Request):
 def post_search(request: Request, query: str = Form(...)):
     """Returns the HTML content for the search results page"""
     username = logged_in_user(request)
-    print(query)
+    tweets = search_tweets(query)
+    print(tweets)
     return templates.TemplateResponse(request,
     "base.html",
     {
