@@ -34,7 +34,7 @@ CREATE INDEX ON users(name);
      FOREIGN KEY (id_users) REFERENCES users(id_users)
  );
 
- CREATE INDEX idx_credentials_user ON credentials(id_users);
+CREATE INDEX idx_credentials_user ON credentials(id_users);
 CREATE INDEX ON credentials(id_users, password);
 
 -- =========================

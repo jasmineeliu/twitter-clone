@@ -273,20 +273,18 @@
                             </article>
                         {% endfor %}
                     </div>
-                    {% if pager and (pager.has_newer or pager.has_older) %}
                         <nav class="timeline-pager" aria-label="Message pagination">
                             <div class="pager-back">
-                                {% if pager.has_newer %}
-                                    <a href="{{ pager.newer_href }}" title="Back — newer messages" aria-label="Back, newer messages"><span aria-hidden="true">←</span></a>
+                                {% if offset > 0 %}
+                                    <a href="{{ "/?" + urlencode({"before_created_at": fc_iso, "before_id": fid}) }}" title="Back — newer messages" aria-label="Back, newer messages"><span aria-hidden="true">←</span></a>
                                 {% endif %}
                             </div>
                             <div class="pager-forward">
-                                {% if pager.has_older %}
+                                {% if tweets|length == 20 %}
                                     <a href="{{ pager.older_href }}" title="Forward — older messages" aria-label="Forward, older messages"><span aria-hidden="true">→</span></a>
                                 {% endif %}
                             </div>
                         </nav>
-                    {% endif %}
                 </section>
             </div>
             {% endif %}
