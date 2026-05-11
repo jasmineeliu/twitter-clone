@@ -250,7 +250,7 @@ def build_timeline_page(
 
 def create_credentials(name, screen_name, password, confirm_password):
     print(name, screen_name, password, confirm_password)
-    random_id = random.randint(-9223372036854775807, 9223372036854775807)
+    random_id = random.randint(1, 9223372036854775807)
     if _engine is None:
         return None
     
@@ -293,7 +293,7 @@ def create_credentials(name, screen_name, password, confirm_password):
             'id_users': random_id,
             'password': password
         })
-
+        conn.commit()
         return True
 
 def check_credentials(username: str, password: str) -> str:
@@ -320,10 +320,15 @@ def check_credentials(username: str, password: str) -> str:
         res = conn.execute(sql, {
             'screen_name': username,
         })
-        print(res)
+        row = res.fetchone()
+
+        if row is None:
+            return None
+
+        stored_password = row.password
+        print(stored_password)
     
-    
-    if username == "Trump" and password == "12345":
+    if password == stored_password:
         return username
     else:
         return None
