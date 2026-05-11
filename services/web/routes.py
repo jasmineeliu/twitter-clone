@@ -265,10 +265,23 @@ def create_credentials(name, screen_name, password, confirm_password):
     print(name, screen_name, password, confirm_password)
     random_id = random.randint(1, 9223372036854775807)
     if _engine is None:
-        return None
-    
+        return "Unexpected Error"
     with _engine.connect() as conn:
-        
+        sql = sqlalchemy.sql.text('''
+            SELECT password FROM credentials 
+            JOIN users USING (id_users)
+            WHERE screen_name = :screen_name
+        ''')
+        res = conn.execute(sql, {
+            'screen_name': screen_name,
+        })
+        row = res.fetchone()
+
+        if row is not None:
+            return "Username already exists"
+        if password != confirm_password:
+            return "Passwords do not match"
+ 
         now = datetime.now(ZoneInfo("America/Los_Angeles"))
         sql = sqlalchemy.sql.text('''
                 INSERT INTO users (
@@ -515,10 +528,8 @@ def post_create_account(request: Request, name: str = Form(...), screen_name: st
     """Returns the HTML content after a successful account creation"""
     created_account = create_credentials(name, screen_name, password, confirm_password)
     username = logged_in_user(request)
-    if password != confirm_password:
-        return templates.TemplateResponse(request, "create_account.html", {"request": request, "username": username, "error": "Passwords do not match"})
-    elif not created_account:
-        return templates.TemplateResponse(request, "create_account.html", {"request": request, "username": username, "error": "Unexpected Error"})
+    if created_account == "Unexpected Error" or created_account == "Username already exists" or created_account=="Passwords do not match":
+        return templates.TemplateResponse(request, "create_account.html", {"request": request, "username": username, "error": created_account})
     else:
         return templates.TemplateResponse(request, "account_created.html", {"request": request, "username": username})
     

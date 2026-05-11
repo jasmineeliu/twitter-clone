@@ -13,7 +13,7 @@ CREATE TABLE users (
     statuses_count INTEGER,
     protected BOOLEAN,
     verified BOOLEAN,
-    screen_name TEXT,
+    screen_name TEXT UNIQUE,
     name TEXT,
     location TEXT,
     description TEXT,
