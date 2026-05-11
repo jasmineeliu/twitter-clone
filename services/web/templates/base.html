@@ -124,92 +124,93 @@
                 background: #f3f4f6;
             }
             /* Container */
-.nav-search-box {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    margin: 1rem 0;
-}
+            .nav-search-box {
+                display: flex;
+                justify-content: center;
+                width: 100%;
+                margin: 1rem 0;
+            }
 
-/* Form */
-.nav-search {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+            /* Form */
+            .nav-search {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
 
-    background: #ffffff;
-    padding: 0.4rem;
-    border-radius: 999px;
+                background: #ffffff;
+                padding: 0.4rem;
+                border-radius: 999px;
 
-    box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.08),
-        0 1px 3px rgba(0, 0, 0, 0.05);
+                box-shadow:
+                    0 4px 12px rgba(0, 0, 0, 0.08),
+                    0 1px 3px rgba(0, 0, 0, 0.05);
 
-    border: 1px solid #e5e7eb;
+                border: 1px solid #e5e7eb;
 
-    width: 100%;
+                width: 100%;
 
-    transition: all 0.2s ease;
-}
+                transition: all 0.2s ease;
+            }
 
-/* Focus glow */
-.nav-search:focus-within {
-    border-color: #3b82f6;
-    box-shadow:
-        0 0 0 4px rgba(59, 130, 246, 0.15),
-        0 4px 12px rgba(0, 0, 0, 0.08);
-}
+            /* Focus glow */
+            .nav-search:focus-within {
+                border-color: #3b82f6;
+                box-shadow:
+                    0 0 0 4px rgba(59, 130, 246, 0.15),
+                    0 4px 12px rgba(0, 0, 0, 0.08);
+            }
 
-/* Input */
-.nav-search input[type="search"] {
-    flex: 1;
-    border: none;
-    outline: none;
+            /* Input */
+            .nav-search input[type="search"] {
+                flex: 1;
+                border: none;
+                outline: none;
 
-    padding: 0.85rem 1rem;
-    font-size: 1rem;
-    border-radius: 999px;
+                padding: 0.85rem 1rem;
+                font-size: 1rem;
+                border-radius: 999px;
 
-    background: transparent;
-    color: #111827;
-}
+                background: transparent;
+                color: #111827;
+            }
 
-/* Placeholder */
-.nav-search input[type="search"]::placeholder {
-    color: #9ca3af;
-}
+            /* Placeholder */
+            .nav-search input[type="search"]::placeholder {
+                color: #9ca3af;
+            }
 
-/* Button */
-.nav-search button {
-    border: none;
-    outline: none;
+            /* Button */
+            .nav-search button {
+                border: none;
+                outline: none;
 
-    background: #3b82f6;
-    color: white;
+                background: #3b82f6;
+                color: white;
 
-    padding: 0.75rem 1.2rem;
-    border-radius: 999px;
+                padding: 0.75rem 1.2rem;
+                border-radius: 999px;
 
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
 
-    transition: background 0.2s ease, transform 0.15s ease;
-}
+                transition: background 0.2s ease, transform 0.15s ease;
+            }
 
-/* Hover */
-.nav-search button:hover {
-    background: #2563eb;
-    transform: translateY(-1px);
-}
+            /* Hover */
+            .nav-search button:hover {
+                background: #2563eb;
+                transform: translateY(-1px);
+            }
 
-/* Click */
-.nav-search button:active {
-    transform: translateY(0);
-}
+            /* Click */
+            .nav-search button:active {
+                transform: translateY(0);
+            }
                 .tweets-holder {
                 width: 60%;
                 }
+
         </style>
     </head>
     <body>
@@ -233,9 +234,10 @@
         {% endif %}
 
         <main class="container">
-
+            
             {% if tweets %}
             <div class="tweets-container">
+                {% block successContent %}{% endblock %}
                 <section class="tweets-holder">
                     <div class="nav-search-box">
                     <form class="nav-search" action="/search" method="get" role="search">

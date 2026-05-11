@@ -469,16 +469,7 @@ def post_create_account(request: Request, name: str = Form(...), screen_name: st
     elif not created_account:
         return templates.TemplateResponse(request, "create_account.html", {"request": request, "username": username, "error": "Unexpected Error"})
     else:
-        valid_username = check_credentials(screen_name, password)
-        if valid_username is not None:
-            # Credentials are valid, set cookies and return the success page
-            response = templates.TemplateResponse(request, "login_successful.html", {"request": request, "username": valid_username})
-            response.set_cookie("username", username)
-            response.set_cookie("password", password)
-            return response
-        else:
-            # Credentials are invalid, return an error page
-            return templates.TemplateResponse(request, "login.html", {"request": request, "username": None, "error": "Invalid username or password"})
+        return templates.TemplateResponse(request, "account_created.html", {"request": request, "username": username})
     
 @router.get("/create_message")
 def read_create_message(request: Request):

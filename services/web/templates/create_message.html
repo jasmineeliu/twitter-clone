@@ -1,10 +1,193 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Create message page</h1>
-    <form action="/create_message" method="post">
-        <label for="message">Message:</label><br>
-        <input type="text" id="message" name="message" required><br>
-        <input type="submit" value="Submit">
-    </form>
+
+<style>
+    body {
+        background: #f4f7fb;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .message-container {
+        min-height: 80vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+    }
+
+    .message-card {
+        width: 100%;
+        max-width: 600px;
+
+        background: white;
+
+        padding: 2.5rem;
+
+        border-radius: 24px;
+
+        border: 1px solid #e5e7eb;
+
+        box-shadow:
+            0 10px 25px rgba(0, 0, 0, 0.08),
+            0 4px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    .message-card h1 {
+        text-align: center;
+        margin-bottom: 2rem;
+
+        color: #111827;
+        font-size: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+
+        margin-bottom: 0.6rem;
+
+        font-weight: 600;
+        color: #374151;
+
+        font-size: 1rem;
+    }
+
+    .form-group textarea {
+        width: 100%;
+        min-height: 180px;
+
+        padding: 1rem;
+
+        border-radius: 18px;
+        border: 1px solid #d1d5db;
+
+        font-size: 1rem;
+        line-height: 1.5;
+
+        resize: vertical;
+
+        box-sizing: border-box;
+
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .form-group textarea:focus {
+        outline: none;
+
+        border-color: #1e90ff;
+
+        box-shadow:
+            0 0 0 4px rgba(30, 144, 255, 0.15);
+    }
+
+    .submit-btn {
+        width: 100%;
+
+        padding: 1rem;
+
+        border: none;
+        border-radius: 16px;
+
+        background: #1e90ff;
+        color: white;
+
+        font-size: 1rem;
+        font-weight: 700;
+
+        cursor: pointer;
+
+        transition:
+            background 0.2s ease,
+            transform 0.15s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .submit-btn:hover {
+        background: #1877db;
+
+        transform: translateY(-1px);
+
+        box-shadow:
+            0 6px 14px rgba(30, 144, 255, 0.25);
+    }
+
+    .submit-btn:active {
+        transform: translateY(0);
+    }
+
+    .home-link {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+
+        width: 100%;
+
+        margin-top: 1.2rem;
+
+        padding: 0.9rem;
+
+        border-radius: 999px;
+
+        background: #eef6ff;
+        color: #1e90ff;
+
+        text-decoration: none;
+        font-weight: 700;
+
+        transition:
+            background 0.2s ease,
+            transform 0.15s ease;
+    }
+
+    .home-link:hover {
+        background: #dbeeff;
+        transform: translateY(-1px);
+    }
+</style>
+
+<div class="message-container">
+
+    <div class="message-card">
+
+        <h1>Create Message</h1>
+
+        <form action="/create_message" method="post">
+
+            <div class="form-group">
+
+                <label for="message">
+                    What's on your mind?
+                </label>
+
+                <textarea
+                    id="message"
+                    name="message"
+                    placeholder="Write your message here..."
+                    required
+                ></textarea>
+
+            </div>
+
+            <input
+                type="submit"
+                value="Post Message"
+                class="submit-btn"
+            >
+
+        </form>
+
+        <a href="/" class="home-link">
+            Home
+        </a>
+
+    </div>
+
+</div>
+
 {% endblock %}
