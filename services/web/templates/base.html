@@ -227,7 +227,7 @@
             </div>
         </nav>
 
-        {% if username %}
+        {% if username and not hide_create_button %}
             <div class="floating-create">
                 <a href="/create_message">Create message</a>
             </div>
@@ -237,8 +237,8 @@
             
             {% if tweets %}
             <div class="tweets-container">
-                {% block successContent %}{% endblock %}
                 <section class="tweets-holder">
+                {% block successContent %}{% endblock %}
                     <div class="nav-search-box">
                     <form class="nav-search" action="/search" method="get" role="search">
 

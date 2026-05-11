@@ -19,18 +19,31 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
+LA_TZ = ZoneInfo("America/Los_Angeles")
+
 def format_message_time(value: datetime | None) -> str:
-    """e.g. 3:45 PM · 5/10/2026 (12-hour, middle dot, M/D/YYYY)."""
+    """Example: 3:45 PM · 5/10/2026"""
+
     if value is None:
         return "—"
+
+    # Convert to Los Angeles time
+    if value.tzinfo is not None:
+        value = value.astimezone(LA_TZ)
+    else:
+        # If naive, assume UTC first
+        value = value.replace(tzinfo=ZoneInfo("UTC")).astimezone(LA_TZ)
+
     hour24 = value.hour
     minute = value.minute
+
     hour12 = hour24 % 12
     if hour12 == 0:
         hour12 = 12
-    am_pm = "AM" if hour24 < 12 else "PM"
-    return f"{hour12}:{minute:02d} {am_pm} · {value.month}/{value.day}/{value.year}"
 
+    am_pm = "AM" if hour24 < 12 else "PM"
+
+    return f"{hour12}:{minute:02d} {am_pm} · {value.month}/{value.day}/{value.year}"
 
 templates.env.filters["message_time"] = format_message_time
 
@@ -475,14 +488,20 @@ def post_create_account(request: Request, name: str = Form(...), screen_name: st
 def read_create_message(request: Request):
     """Returns the HTML content for the create message page"""
     username = logged_in_user(request)
-    return templates.TemplateResponse(request, "create_message.html", {"request": request, "username": username})
+    return templates.TemplateResponse(request, "create_message.html", {"request": request, "username": username, "hide_create_button": True})
 
 @router.post("/create_message")
 def post_create_message(request: Request, message: str = Form(...)):
     """Returns the HTML content after a successful message creation"""
     username = logged_in_user(request)
     create_tweet(username, message)
-    return templates.TemplateResponse(request, "message_posted.html", {"request": request, "username": username})
+    tweets, pager = build_timeline_page(
+        before_created_at_param=None,
+        before_id_param=None,
+        after_created_at_param=None,
+        after_id_param=None,
+    )
+    return templates.TemplateResponse(request, "created_tweet.html", {"request": request, "username": username, "tweets": tweets, "pager":pager})
 
 @router.get("/search")
 def read_search(request: Request):
