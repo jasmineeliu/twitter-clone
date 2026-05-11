@@ -1,6 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE EXTENTION IF NOT EXISTS rum;
-
+CREATE EXTENSION IF NOT EXISTS rum;
 -- =========================
 -- USERS
 -- =========================
