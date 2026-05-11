@@ -12,7 +12,7 @@ import os
 import random 
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from starlette.status import HTTP_303_SEE_OTHER
+
 
 # Define the router before using it
 router = APIRouter()
@@ -367,6 +367,7 @@ def check_credentials(username: str, password: str) -> str:
             return None
 
         stored_password = row.password
+        print(stored_password)
     
     if password == stored_password:
         return username
@@ -444,22 +445,13 @@ def search_tweets(query):
 
     stmt = sqlalchemy.text(
         """
-            SELECT 
-            t.id_tweets AS id_tweets,
-            t.id_users AS id_users,
-            t.created_at AS created_at,
-            u.name AS name,
-            u.screen_name AS screen_name,
-            ts_headline(text, q, 
+            SELECT ts_headline(document, q, 
                 'StartSel="<font color=red><b>", 
                 StopSel="</font></b>", 
                 MaxFragments=10, 
-                MinWords=5, MaxWords=10') as "text"
-            FROM tweets as t
-            JOIN users as u USING (id_users),
-            plainto_tsquery('english', :query) as q
-            WHERE to_tsvector('english', text) @@ q 
-            ORDER BY ts_rank(to_tsvector('english', text), q) DESC
+                MinWords=5, MaxWords=10')
+            FROM tweets,
+            WHERE to_tsvector('english', text) @@ to_tsquery('english', :query)
             LIMIT 20
         """
     )
@@ -512,17 +504,10 @@ def post_login(request: Request, username: str = Form(...), password: str = Form
     valid_username = check_credentials(username, password)
     if valid_username is not None:
         # Credentials are valid, set cookies and return the success page
-        tweets, pager = build_timeline_page(
-            before_created_at_param=None,
-            before_id_param=None,
-            after_created_at_param=None,
-            after_id_param=None,
-        )
-        response = templates.TemplateResponse(request, "created_tweet.html", {"request": request, "username": username, "tweets": tweets, "pager":pager, "message": "Successfully logged in."})
+        response = templates.TemplateResponse(request, "login_successful.html", {"request": request, "username": valid_username})
         response.set_cookie("username", username)
         response.set_cookie("password", password)
         return response
-
     else:
         # Credentials are invalid, return an error page
         return templates.TemplateResponse(request, "login.html", {"request": request, "username": None, "error": "Invalid username or password"})
@@ -571,7 +556,7 @@ def post_create_message(request: Request, message: str = Form(...)):
         after_created_at_param=None,
         after_id_param=None,
     )
-    return templates.TemplateResponse(request, "created_tweet.html", {"request": request, "username": username, "tweets": tweets, "pager":pager, "message": "Successfully posted message"})
+    return templates.TemplateResponse(request, "created_tweet.html", {"request": request, "username": username, "tweets": tweets, "pager":pager})
 
 @router.get("/search")
 def read_search(request: Request):
@@ -584,11 +569,11 @@ def post_search(request: Request, query: str = Form(...)):
     """Returns the HTML content for the search results page"""
     username = logged_in_user(request)
     tweets = search_tweets(query)
+    print(tweets)
     return templates.TemplateResponse(request,
     "base.html",
     {
         "username": username,
-        "search_query_raw": query,
-        "tweets": tweets
+        "search_query_raw": query
     }
 )
