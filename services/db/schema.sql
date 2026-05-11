@@ -22,7 +22,6 @@ CREATE TABLE users (
 );
 
 CREATE INDEX idx_users_screen_name ON users(screen_name);
-CREATE INDEX ON users(id_users);
 CREATE INDEX ON users(name);
 
 -- -- =========================
@@ -34,7 +33,6 @@ CREATE INDEX ON users(name);
      FOREIGN KEY (id_users) REFERENCES users(id_users)
  );
 
-CREATE INDEX idx_credentials_user ON credentials(id_users);
 CREATE INDEX ON credentials(id_users, password);
 
 -- =========================
@@ -62,4 +60,5 @@ CREATE TABLE tweets (
 
 CREATE INDEX ON tweets( id_tweets, id_users, created_at, text);
 CREATE INDEX tweets_idx_fts on tweets USING rum(to_tsvector('english', text));
-
+CREATE INDEX idx_tweets_created_at_id
+ON tweets (created_at DESC, id_tweets DESC);
