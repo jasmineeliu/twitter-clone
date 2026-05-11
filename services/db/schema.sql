@@ -56,8 +56,24 @@ CREATE TABLE tweets (
     place_name TEXT,
     FOREIGN KEY (id_users) REFERENCES users(id_users)
 );
+ALTER TABLE tweets
+ADD COLUMN text_tsv tsvector;
+
+CREATE FUNCTION tweets_tsv_update() RETURNS trigger AS $$
+BEGIN
+  NEW.text_tsv := to_tsvector('english', NEW.text);
+  RETURN NEW;
+END
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tweets_tsv_trigger
+BEFORE INSERT OR UPDATE ON tweets
+FOR EACH ROW EXECUTE FUNCTION tweets_tsv_update();
+
+CREATE INDEX idx_tweets_tsv_rum
+ON tweets
+USING RUM (text_tsv rum_tsvector_ops);
 
 CREATE INDEX ON tweets( id_tweets, id_users, created_at, text);
-CREATE INDEX tweets_idx_fts on tweets USING rum(to_tsvector('english', text));
 CREATE INDEX idx_tweets_created_at_id
 ON tweets (created_at DESC, id_tweets DESC);

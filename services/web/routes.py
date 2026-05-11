@@ -431,8 +431,8 @@ def search_tweets(query):
             FROM tweets as t
             JOIN users as u USING (id_users),
             plainto_tsquery('english', :query) as q
-            WHERE to_tsvector('english', text) @@ q 
-            ORDER BY ts_rank(to_tsvector('english', text), q) DESC
+            WHERE t.text_tsv @@ q 
+            ORDER BY ts_rank(t.text_tsv, q) DESC
         """
     )
 
@@ -552,7 +552,7 @@ def post_search(request: Request, query: str = Form(...)):
     """Returns the HTML content for the search results page"""
     username = logged_in_user(request)
     tweets = search_tweets(query)
-    print(tweets)
+    print(query)
     return templates.TemplateResponse(request,
     "base.html",
     {
