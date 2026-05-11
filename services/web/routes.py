@@ -9,7 +9,7 @@ from typing import Any, Literal, Mapping, Sequence
 from urllib.parse import urlencode
 import sqlalchemy
 import os
-import uuid
+import random 
 from datetime import datetime
 
 
@@ -250,29 +250,13 @@ def build_timeline_page(
 
 def create_credentials(name, screen_name, password, confirm_password):
     print(name, screen_name, password, confirm_password)
-    random_id = uuid.uuid4()
-
+    random_id = random.randint(-9223372036854775807, 9223372036854775807)
     if _engine is None:
         return None
     
     with _engine.connect() as conn:
-        sql = sqlalchemy.sql.text('''
-                INSERT INTO credentials (
-                    id_users,
-                    password
-                )
-                VALUES (
-                    :id_users,
-                    :password
-                )
-            ''')
         
-        res = conn.execute(sql, {
-            'id_users': random_id,
-            'password': password
-        })
         now = datetime.now() 
-
         sql = sqlalchemy.sql.text('''
                 INSERT INTO users (
                     id_users,
@@ -294,7 +278,23 @@ def create_credentials(name, screen_name, password, confirm_password):
             'screen_name': screen_name,
             'name': name
         })
-        return
+        sql = sqlalchemy.sql.text('''
+                INSERT INTO credentials (
+                    id_users,
+                    password
+                )
+                VALUES (
+                    :id_users,
+                    :password
+                )
+            ''')
+        
+        res = conn.execute(sql, {
+            'id_users': random_id,
+            'password': password
+        })
+
+        return True
 
 def check_credentials(username: str, password: str) -> str:
     """
@@ -310,7 +310,7 @@ def check_credentials(username: str, password: str) -> str:
     if _engine is None:
         return None
     
-    with _engine.connect() as conn:
+    with _engine.begin() as conn:
         sql = sqlalchemy.sql.text('''
                 SELECT password FROM credentials 
                 JOIN users USING (id_users)
