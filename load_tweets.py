@@ -38,7 +38,6 @@ def remove_nulls(s):
         return s.replace('\x00','')
 
 def insert_tweet(connection,tweet):
-    
     '''
     Insert the tweet into the database.
 

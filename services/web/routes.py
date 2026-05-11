@@ -9,6 +9,8 @@ from typing import Any, Literal, Mapping, Sequence
 from urllib.parse import urlencode
 import sqlalchemy
 import os
+import uuid
+from datetime import datetime
 
 
 # Define the router before using it
@@ -246,6 +248,54 @@ def build_timeline_page(
     }
     return page_rows, pager
 
+def create_credentials(name, screen_name, password, confirm_password):
+    print(name, screen_name, password, confirm_password)
+    random_id = uuid.uuid4()
+
+    if _engine is None:
+        return None
+    
+    with _engine.connect() as conn:
+        sql = sqlalchemy.sql.text('''
+                INSERT INTO credentials (
+                    id_users,
+                    password
+                )
+                VALUES (
+                    :id_users,
+                    :password
+                )
+            ''')
+        
+        res = conn.execute(sql, {
+            'id_users': random_id,
+            'password': password
+        })
+        now = datetime.now() 
+
+        sql = sqlalchemy.sql.text('''
+                INSERT INTO users (
+                    id_users,
+                    created_at,
+                    screen_name,
+                    name
+                )
+                VALUES (
+                    :id_users,
+                    :created_at,
+                    :screen_name,
+                    :name
+                )
+            ''')
+        
+        res = conn.execute(sql, {
+            'id_users': random_id,
+            'created_at': now,
+            'screen_name': screen_name,
+            'name': name
+        })
+        return
+
 def check_credentials(username: str, password: str) -> str:
     """
     Checks if the provided username and password are valid.
@@ -257,8 +307,22 @@ def check_credentials(username: str, password: str) -> str:
     Returns:
     - str: The username if the credentials are valid, otherwise None.
     """
-    # FIXME: Add database code to check credentials
-    # For now, this is a mock with hardcoded valid credentials
+    if _engine is None:
+        return None
+    
+    with _engine.connect() as conn:
+        sql = sqlalchemy.sql.text('''
+                SELECT password FROM credentials 
+                JOIN users USING (id_users)
+                WHERE 
+                screen_name = :screen_name
+            ''')
+        res = conn.execute(sql, {
+            'screen_name': username,
+        })
+        print(res)
+    
+    
     if username == "Trump" and password == "12345":
         return username
     else:
@@ -346,10 +410,24 @@ def read_create_account(request: Request):
 @router.post("/create_account")
 def post_create_account(request: Request, name: str = Form(...), screen_name: str = Form(...), password: str = Form(...), confirm_password: str = Form(...)):
     """Returns the HTML content after a successful account creation"""
-    print(name, screen_name, password, confirm_password)
+    created_account = create_credentials(name, screen_name, password, confirm_password)
     username = logged_in_user(request)
-    return templates.TemplateResponse(request, "account_created.html", {"request": request, "username": username})
-
+    if password != confirm_password:
+        return templates.TemplateResponse(request, "create_account.html", {"request": request, "username": username, "error": "Passwords do not match"})
+    elif not created_account:
+        return templates.TemplateResponse(request, "create_account.html", {"request": request, "username": username, "error": "Unexpected Error"})
+    else:
+        valid_username = check_credentials(screen_name, password)
+        if valid_username is not None:
+            # Credentials are valid, set cookies and return the success page
+            response = templates.TemplateResponse(request, "login_successful.html", {"request": request, "username": valid_username})
+            response.set_cookie("username", username)
+            response.set_cookie("password", password)
+            return response
+        else:
+            # Credentials are invalid, return an error page
+            return templates.TemplateResponse(request, "login.html", {"request": request, "username": None, "error": "Invalid username or password"})
+    
 @router.get("/create_message")
 def read_create_message(request: Request):
     """Returns the HTML content for the create message page"""
