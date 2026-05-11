@@ -563,7 +563,7 @@ def read_search(
     offset: int = Query(0),
 ):
     username = logged_in_user(request)
-
+    print("hi", offset, query)
     tweets = []
 
     if query:
@@ -571,6 +571,15 @@ def read_search(
 
     next_offset = offset + _PAGE_SIZE
     prev_offset = max(offset - _PAGE_SIZE, 0)
+    
+    next_href = "/search?" + urlencode({
+        "offset": next_offset,
+        "query": query,
+    })
+    prev_href = "/search?" + urlencode({
+        "offset": prev_offset,
+        "query": query,
+    })
 
     return templates.TemplateResponse(  
         request,
@@ -580,13 +589,13 @@ def read_search(
             "username": username,
             "tweets": tweets,
             "offset": offset,
-            "next_offset": next_offset,
-            "prev_offset": prev_offset,
+            "next_href": next_href,
+            "prev_href": prev_href,
         },
     
     )
     
 @router.post("/search")
 def post_search(query: str = Form(...)):
-    url = "/search?" + urlencode({"query": query} + urlencode({"offset": 0}))
+    url = "/search?" + urlencode({"query": query})
     return RedirectResponse(url=url, status_code=303)
