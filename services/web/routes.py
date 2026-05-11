@@ -52,8 +52,37 @@ _PAGE_SIZE = 20
 _DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:pass@db:5432/postgres_dev")
 _engine = sqlalchemy.create_engine(_DATABASE_URL) if _DATABASE_URL else None
 
+def _parse_created_at_iso(value: str | None) -> datetime | None:
+    if value is None or value == "":
+        return None
+    s = value.strip().replace("Z", "+00:00")
+    try:
+        return datetime.fromisoformat(s)
+    except ValueError:
+        return None
 
-def fetch_tweets(offset: int = 0):
+
+def _peek_has_older_than(cursor_created_at: datetime | None, cursor_id_tweets: int) -> bool:
+    if _engine is None:
+        return False
+    stmt = sqlalchemy.text(
+        """
+        SELECT EXISTS (
+            SELECT 1
+            FROM tweets AS t
+            WHERE (t.created_at, t.id_tweets) < (:cursor_created_at, :cursor_id_tweets)
+        ) 
+        """
+    )
+    with _engine.connect() as conn:
+        value = conn.execute(
+            stmt,
+            {"cursor_created_at": cursor_created_at, "cursor_id_tweets": cursor_id_tweets},
+        ).scalar()
+        return bool(value)
+
+
+def fetch_tweets_first_page(*, limit_plus_one: int) -> Sequence[Mapping[str, Any]]:
     if _engine is None:
         return []
 
@@ -69,225 +98,168 @@ def fetch_tweets(offset: int = 0):
         FROM tweets AS t
         JOIN users AS u USING (id_users)
         ORDER BY t.created_at DESC NULLS LAST, t.id_tweets DESC
-        LIMIT :limit
-        OFFSET :offset
+        LIMIT :limit_plus_one
+        """
+    )
+
+    with _engine.connect() as conn:
+        return conn.execute(stmt, {"limit_plus_one": limit_plus_one}).mappings().all()
+
+
+def fetch_tweets_older_than(
+    *,
+    cursor_created_at: datetime | None,
+    cursor_id_tweets: int,
+    limit_plus_one: int,
+) -> Sequence[Mapping[str, Any]]:
+    if _engine is None:
+        return []
+
+    stmt = sqlalchemy.text(
+        """
+        SELECT
+            t.id_tweets AS id_tweets,
+            t.id_users AS id_users,
+            t.created_at AS created_at,
+            t.text AS text,
+            u.name AS name,
+            u.screen_name AS screen_name
+        FROM tweets AS t
+        JOIN users AS u USING (id_users)
+        WHERE (t.created_at, t.id_tweets) < (:cursor_created_at, :cursor_id_tweets)
+        ORDER BY t.created_at DESC NULLS LAST, t.id_tweets DESC
+        LIMIT :limit_plus_one
         """
     )
 
     with _engine.connect() as conn:
         return conn.execute(
             stmt,
-            {"limit": _PAGE_SIZE, "offset": offset},
+            {
+                "cursor_created_at": cursor_created_at,
+                "cursor_id_tweets": cursor_id_tweets,
+                "limit_plus_one": limit_plus_one,
+            },
         ).mappings().all()
 
-# def _parse_created_at_iso(value: str | None) -> datetime | None:
-#     if value is None or value == "":
-#         return None
-#     s = value.strip().replace("Z", "+00:00")
-#     try:
-#         return datetime.fromisoformat(s)
-#     except ValueError:
-#         return None
+
+def fetch_tweets_newer_than(
+    *,
+    cursor_created_at: datetime | None,
+    cursor_id_tweets: int,
+    limit_plus_one: int,
+) -> Sequence[Mapping[str, Any]]:
+    """
+    Rows strictly newer than the cursor, returned oldest→newest, then reversed
+    so the template renders newest-first.
+    """
+    if _engine is None:
+        return []
+
+    stmt = sqlalchemy.text(
+        """
+        SELECT
+            t.id_tweets AS id_tweets,
+            t.id_users AS id_users,
+            t.created_at AS created_at,
+            t.text AS text,
+            u.name AS name,
+            u.screen_name AS screen_name
+        FROM tweets AS t
+        JOIN users AS u USING (id_users)
+        WHERE (t.created_at, t.id_tweets) > (:cursor_created_at, :cursor_id_tweets)
+        ORDER BY t.created_at ASC NULLS LAST, t.id_tweets ASC
+        LIMIT :limit_plus_one
+        """
+    )
+
+    with _engine.connect() as conn:
+        rows = conn.execute(
+            stmt,
+            {
+                "cursor_created_at": cursor_created_at,
+                "cursor_id_tweets": cursor_id_tweets,
+                "limit_plus_one": limit_plus_one,
+            },
+        ).mappings().all()
+
+    return list(reversed(rows))
 
 
-# def _peek_has_older_than(cursor_created_at: datetime | None, cursor_id_tweets: int) -> bool:
-#     if _engine is None:
-#         return False
-#     stmt = sqlalchemy.text(
-#         """
-#         SELECT EXISTS (
-#             SELECT 1
-#             FROM tweets AS t
-#             WHERE (t.created_at, t.id_tweets) < (:cursor_created_at, :cursor_id_tweets)
-#         ) 
-#         """
-#     )
-#     with _engine.connect() as conn:
-#         value = conn.execute(
-#             stmt,
-#             {"cursor_created_at": cursor_created_at, "cursor_id_tweets": cursor_id_tweets},
-#         ).scalar()
-#         return bool(value)
+def build_timeline_page(
+    *,
+    before_created_at_param: str | None,
+    before_id_param: int | None,
+    after_created_at_param: str | None,
+    after_id_param: int | None,
+) -> tuple[list[Mapping[str, Any]], dict[str, Any] | None]:
+    """
+    Seek pagination keyed by (created_at, id_tweets). Avoids OFFSET; pairs with idx_tweets_timeline.
+    """
+    if _engine is None:
+        return [], None
 
+    limit_plus_one = _PAGE_SIZE + 1
+    before_dt = _parse_created_at_iso(before_created_at_param)
+    after_dt = _parse_created_at_iso(after_created_at_param)
 
-# def fetch_tweets_first_page(*, limit_plus_one: int) -> Sequence[Mapping[str, Any]]:
-    # if _engine is None:
-    #     return []
+    mode: Literal["first", "older", "newer"]
+    if before_dt is not None and before_id_param is not None:
+        mode = "newer"
+        rows = fetch_tweets_newer_than(
+            cursor_created_at=before_dt,
+            cursor_id_tweets=before_id_param,
+            limit_plus_one=limit_plus_one,
+        )
+    elif after_dt is not None and after_id_param is not None:
+        mode = "older"
+        rows = fetch_tweets_older_than(
+            cursor_created_at=after_dt,
+            cursor_id_tweets=after_id_param,
+            limit_plus_one=limit_plus_one,
+        )
+    else:
+        mode = "first"
+        rows = fetch_tweets_first_page(limit_plus_one=limit_plus_one)
 
-    # stmt = sqlalchemy.text(
-    #     """
-    #     SELECT
-    #         t.id_tweets AS id_tweets,
-    #         t.id_users AS id_users,
-    #         t.created_at AS created_at,
-    #         t.text AS text,
-    #         u.name AS name,
-    #         u.screen_name AS screen_name
-    #     FROM tweets AS t
-    #     JOIN users AS u USING (id_users)
-    #     ORDER BY t.created_at DESC NULLS LAST, t.id_tweets DESC
-    #     LIMIT :limit_plus_one
-    #     """
-    # )
+    has_more_this_direction = len(rows) > _PAGE_SIZE
+    page_rows = list(rows[:_PAGE_SIZE])
 
-    # with _engine.connect() as conn:
-    #     return conn.execute(stmt, {"limit_plus_one": limit_plus_one}).mappings().all()
+    if not page_rows:
+        return [], None
 
+    first = page_rows[0]
+    last = page_rows[-1]
+    fc = first["created_at"]
+    lc = last["created_at"]
+    fid = int(first["id_tweets"])
+    lid = int(last["id_tweets"])
 
-# def fetch_tweets_older_than(
-#     *,
-#     cursor_created_at: datetime | None,
-#     cursor_id_tweets: int,
-#     limit_plus_one: int,
-# ) -> Sequence[Mapping[str, Any]]:
-#     if _engine is None:
-#         return []
+    fc_iso = fc.isoformat() if isinstance(fc, datetime) else ""
+    lc_iso = lc.isoformat() if isinstance(fc, datetime) else ""
 
-#     stmt = sqlalchemy.text(
-#         """
-#         SELECT
-#             t.id_tweets AS id_tweets,
-#             t.id_users AS id_users,
-#             t.created_at AS created_at,
-#             t.text AS text,
-#             u.name AS name,
-#             u.screen_name AS screen_name
-#         FROM tweets AS t
-#         JOIN users AS u USING (id_users)
-#         WHERE (t.created_at, t.id_tweets) < (:cursor_created_at, :cursor_id_tweets)
-#         ORDER BY t.created_at DESC NULLS LAST, t.id_tweets DESC
-#         LIMIT :limit_plus_one
-#         """
-#     )
+    if mode in ("first", "older"):
+        has_older = has_more_this_direction
+    else:
+        has_older = _peek_has_older_than(lc, lid)
 
-#     with _engine.connect() as conn:
-#         return conn.execute(
-#             stmt,
-#             {
-#                 "cursor_created_at": cursor_created_at,
-#                 "cursor_id_tweets": cursor_id_tweets,
-#                 "limit_plus_one": limit_plus_one,
-#             },
-#         ).mappings().all()
+    if mode == "first":
+        has_newer = False
+    elif mode == "older":
+        has_newer = True
+    else:
+        has_newer = has_more_this_direction
 
+    newer_href = "/?" + urlencode({"before_created_at": fc_iso, "before_id": fid})
+    older_href = "/?" + urlencode({"after_created_at": lc_iso, "after_id": lid})
 
-# def fetch_tweets_newer_than(
-#     *,
-#     cursor_created_at: datetime | None,
-#     cursor_id_tweets: int,
-#     limit_plus_one: int,
-# ) -> Sequence[Mapping[str, Any]]:
-#     """
-#     Rows strictly newer than the cursor, returned oldest→newest, then reversed
-#     so the template renders newest-first.
-#     """
-#     if _engine is None:
-#         return []
-
-#     stmt = sqlalchemy.text(
-#         """
-#         SELECT
-#             t.id_tweets AS id_tweets,
-#             t.id_users AS id_users,
-#             t.created_at AS created_at,
-#             t.text AS text,
-#             u.name AS name,
-#             u.screen_name AS screen_name
-#         FROM tweets AS t
-#         JOIN users AS u USING (id_users)
-#         WHERE (t.created_at, t.id_tweets) > (:cursor_created_at, :cursor_id_tweets)
-#         ORDER BY t.created_at ASC NULLS LAST, t.id_tweets ASC
-#         LIMIT :limit_plus_one
-#         """
-#     )
-
-#     with _engine.connect() as conn:
-#         rows = conn.execute(
-#             stmt,
-#             {
-#                 "cursor_created_at": cursor_created_at,
-#                 "cursor_id_tweets": cursor_id_tweets,
-#                 "limit_plus_one": limit_plus_one,
-#             },
-#         ).mappings().all()
-
-#     return list(reversed(rows))
-
-
-# def build_timeline_page(
-#     *,
-#     before_created_at_param: str | None,
-#     before_id_param: int | None,
-#     after_created_at_param: str | None,
-#     after_id_param: int | None,
-# ) -> tuple[list[Mapping[str, Any]], dict[str, Any] | None]:
-#     """
-#     Seek pagination keyed by (created_at, id_tweets). Avoids OFFSET; pairs with idx_tweets_timeline.
-#     """
-#     if _engine is None:
-#         return [], None
-
-#     limit_plus_one = _PAGE_SIZE + 1
-#     before_dt = _parse_created_at_iso(before_created_at_param)
-#     after_dt = _parse_created_at_iso(after_created_at_param)
-
-#     mode: Literal["first", "older", "newer"]
-#     if before_dt is not None and before_id_param is not None:
-#         mode = "newer"
-#         rows = fetch_tweets_newer_than(
-#             cursor_created_at=before_dt,
-#             cursor_id_tweets=before_id_param,
-#             limit_plus_one=limit_plus_one,
-#         )
-#     elif after_dt is not None and after_id_param is not None:
-#         mode = "older"
-#         rows = fetch_tweets_older_than(
-#             cursor_created_at=after_dt,
-#             cursor_id_tweets=after_id_param,
-#             limit_plus_one=limit_plus_one,
-#         )
-#     else:
-#         mode = "first"
-#         rows = fetch_tweets_first_page(limit_plus_one=limit_plus_one)
-
-#     has_more_this_direction = len(rows) > _PAGE_SIZE
-#     page_rows = list(rows[:_PAGE_SIZE])
-
-#     if not page_rows:
-#         return [], None
-
-#     first = page_rows[0]
-#     last = page_rows[-1]
-#     fc = first["created_at"]
-#     lc = last["created_at"]
-#     fid = int(first["id_tweets"])
-#     lid = int(last["id_tweets"])
-
-#     fc_iso = fc.isoformat() if isinstance(fc, datetime) else ""
-#     lc_iso = lc.isoformat() if isinstance(fc, datetime) else ""
-
-#     if mode in ("first", "older"):
-#         has_older = has_more_this_direction
-#     else:
-#         has_older = _peek_has_older_than(lc, lid)
-
-#     if mode == "first":
-#         has_newer = False
-#     elif mode == "older":
-#         has_newer = True
-#     else:
-#         has_newer = has_more_this_direction
-
-#     newer_href = "/?" + urlencode({"before_created_at": fc_iso, "before_id": fid})
-#     older_href = "/?" + urlencode({"after_created_at": lc_iso, "after_id": lid})
-
-#     pager = {
-#         "has_newer": has_newer and bool(fc_iso),
-#         "has_older": has_older and bool(lc_iso),
-#         "newer_href": newer_href,
-#         "older_href": older_href,
-#     }
-#     return page_rows, pager
+    pager = {
+        "has_newer": has_newer and bool(fc_iso),
+        "has_older": has_older and bool(lc_iso),
+        "newer_href": newer_href,
+        "older_href": older_href,
+    }
+    return page_rows, pager
 
 def create_credentials(name, screen_name, password, confirm_password):
     print(name, screen_name, password, confirm_password)
@@ -445,14 +417,22 @@ def search_tweets(query):
 
     stmt = sqlalchemy.text(
         """
-            SELECT ts_headline(document, q, 
+            SELECT 
+            t.id_tweets AS id_tweets,
+            t.id_users AS id_users,
+            t.created_at AS created_at,
+            u.name AS name,
+            u.screen_name AS screen_name,
+            ts_headline(text, q, 
                 'StartSel="<font color=red><b>", 
                 StopSel="</font></b>", 
                 MaxFragments=10, 
-                MinWords=5, MaxWords=10')
-            FROM tweets,
-            WHERE to_tsvector('english', text) @@ to_tsquery('english', :query)
-            LIMIT 20
+                MinWords=5, MaxWords=10') as "text"
+            FROM tweets as t
+            JOIN users as u USING (id_users),
+            plainto_tsquery('english', :query) as q
+            WHERE to_tsvector('english', text) @@ q 
+            ORDER BY ts_rank(to_tsvector('english', text), q) DESC
         """
     )
 
@@ -467,28 +447,25 @@ def search_tweets(query):
 @router.get("/")
 async def read_root(
     request: Request,
-    offset: int = Query(0),
+    before_created_at: str | None = Query(None),
+    before_id: int | None = Query(None),
+    after_created_at: str | None = Query(None),
+    after_id: int | None = Query(None),
 ):
     """Home timeline: 20 messages per page, newest first, keyset pagination."""
     username = logged_in_user(request)
-
-    tweets = fetch_tweets(offset=offset)
-
-    next_offset = offset + _PAGE_SIZE
-    prev_offset = max(offset - _PAGE_SIZE, 0)
-
+    tweets, pager = build_timeline_page(
+        before_created_at_param=before_created_at,
+        before_id_param=before_id,
+        after_created_at_param=after_created_at,
+        after_id_param=after_id,
+    )
     return templates.TemplateResponse(
         request,
         "index.html",
-        {
-            "request": request,
-            "username": username,
-            "tweets": tweets,
-            "offset": offset,
-            "next_offset": next_offset,
-            "prev_offset": prev_offset,
-        },
+        {"request": request, "username": username, "tweets": tweets, "pager": pager},
     )
+    
 @router.get("/login")
 def read_login(request: Request):
     """Returns the HTML content for the login page"""
@@ -504,7 +481,13 @@ def post_login(request: Request, username: str = Form(...), password: str = Form
     valid_username = check_credentials(username, password)
     if valid_username is not None:
         # Credentials are valid, set cookies and return the success page
-        response = templates.TemplateResponse(request, "login_successful.html", {"request": request, "username": valid_username})
+        tweets, pager = build_timeline_page(
+            before_created_at_param=None,
+            before_id_param=None,
+            after_created_at_param=None,
+            after_id_param=None,
+        )
+        response = templates.TemplateResponse(request, "created_tweet.html", {"request": request, "username": username, "tweets": tweets, "pager":pager, "message": "Successfully logged in."})
         response.set_cookie("username", username)
         response.set_cookie("password", password)
         return response
@@ -556,7 +539,7 @@ def post_create_message(request: Request, message: str = Form(...)):
         after_created_at_param=None,
         after_id_param=None,
     )
-    return templates.TemplateResponse(request, "created_tweet.html", {"request": request, "username": username, "tweets": tweets, "pager":pager})
+    return templates.TemplateResponse(request, "created_tweet.html", {"request": request, "username": username, "tweets": tweets, "pager":pager, "message": "Successfully posted message"})
 
 @router.get("/search")
 def read_search(request: Request):
@@ -574,6 +557,7 @@ def post_search(request: Request, query: str = Form(...)):
     "base.html",
     {
         "username": username,
-        "search_query_raw": query
+        "search_query_raw": query,
+        "tweets": tweets
     }
 )
