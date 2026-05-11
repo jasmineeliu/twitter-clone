@@ -11,6 +11,7 @@ import sqlalchemy
 import os
 import random 
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 # Define the router before using it
@@ -256,7 +257,7 @@ def create_credentials(name, screen_name, password, confirm_password):
     
     with _engine.connect() as conn:
         
-        now = datetime.now() 
+        now = datetime.now(ZoneInfo("America/Los_Angeles"))
         sql = sqlalchemy.sql.text('''
                 INSERT INTO users (
                     id_users,
@@ -373,7 +374,7 @@ def create_tweet(username, tweet_text):
         id_user = row.id_users
                 
         
-        now = datetime.now() 
+        now = datetime.now(ZoneInfo("America/Los_Angeles"))
         sql = sqlalchemy.sql.text('''
                 INSERT INTO tweets (
                     id_tweets,
