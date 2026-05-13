@@ -12,6 +12,7 @@ import os
 import random 
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from typing import Optional
 
 
 # Define the router before using it
@@ -487,6 +488,8 @@ async def read_root(
 def read_login(request: Request):
     """Returns the HTML content for the login page"""
     username = logged_in_user(request)
+    if username is not None:
+        return RedirectResponse(url="/")
     return templates.TemplateResponse(request, "login.html", {"request": request, "username": username})
 
 @router.post("/login")
@@ -516,6 +519,8 @@ def post_login(request: Request, username: str = Form(...), password: str = Form
 def read_logout(request: Request):
     """Returns the HTML content for the logout page and deletes cookies"""
     username = logged_in_user(request)
+    if username is None:
+        return RedirectResponse(url="/")
     response = templates.TemplateResponse(request, "logout.html", {"request": request, "username": None})
     response.delete_cookie("username")
     response.delete_cookie("password")
@@ -525,6 +530,8 @@ def read_logout(request: Request):
 def read_create_account(request: Request):
     """Returns the HTML content for the create account page"""
     username = logged_in_user(request)
+    if username is not None:
+        return RedirectResponse(url="/")
     return templates.TemplateResponse(request, "create_account.html", {"request": request, "username": username})
 
 @router.post("/create_account")
@@ -541,6 +548,8 @@ def post_create_account(request: Request, name: str = Form(...), screen_name: st
 def read_create_message(request: Request):
     """Returns the HTML content for the create message page"""
     username = logged_in_user(request)
+    if username is None:
+        return RedirectResponse(url="/")
     return templates.TemplateResponse(request, "create_message.html", {"request": request, "username": username, "hide_create_button": True})
 
 @router.post("/create_message")
@@ -591,11 +600,14 @@ def read_search(
             "offset": offset,
             "next_href": next_href,
             "prev_href": prev_href,
+            "search_query_raw": query
         },
     
     )
     
 @router.post("/search")
-def post_search(query: str = Form(...)):
+def post_search(query: Optional[str] = Form(None)):
+    if not query or not query.strip():
+        return RedirectResponse(url="/", status_code=303)
     url = "/search?" + urlencode({"query": query})
     return RedirectResponse(url=url, status_code=303)

@@ -349,15 +349,14 @@
                     {% endif %} 
                 </section>
             </div>
-            {% endif %}
-
-            {% if search_query_raw %}
+           {% elif search_query_raw %}
             <div class="holder">
                 <div class="holder-2">
                     <h3>No tweets found</h3>
                     <a href="/" class="home-btn">Home</a>
                </div>
             </div>
+
             {% endif %}
             {% block content %}{% endblock %}
         </main>
